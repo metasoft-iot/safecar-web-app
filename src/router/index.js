@@ -11,7 +11,7 @@ import AppointmentRequestDetailManagementComponent
 import DashboardManagementComponent from "@/dashboard/pages/dashboard-management.component.vue";
 import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-management.component.vue";
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
-
+import SubscriptionManagementComponent from "@/subscriptions/pages/subscription-management.component.vue";
 
 
 const router = createRouter({
@@ -96,11 +96,14 @@ const router = createRouter({
                     component: VehicleDetailManagementComponent,
                     meta: { title: 'Detalles del Vehículo' }
                 },
-                // =========================================================================
+                // ============================== Rutas para la gestion de suscripciones ===========================================
 
-
-
-
+                {
+                    path: 'mechanic/subscriptions',
+                    name: 'subscriptions-management',
+                    component: SubscriptionManagementComponent, 
+                    meta: { title: 'Gestión de Suscripciones' }
+                },
 
 
             ]

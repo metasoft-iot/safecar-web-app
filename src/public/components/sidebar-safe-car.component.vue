@@ -21,7 +21,7 @@ export default {
         { label: this.$t('sidebar.menu.appointments'), icon: 'pi pi-fw pi-file-edit', to: `/safe-car/mechanic/service-request` },
         { label: this.$t('sidebar.menu.history'), icon: 'pi pi-fw pi-users', to: `/safe-car/mechanic/service-history` },
         { label: this.$t('sidebar.menu.vehicles'), icon: 'pi pi-fw pi-chart-bar', to: `/safe-car/mechanic/vehicle-management` },
-
+        { label: this.$t('sidebar.menu.payments'), icon: 'pi pi-fw pi-credit-card', to: `/safe-car/mechanic/subscriptions` },
       ];
     }
   },
