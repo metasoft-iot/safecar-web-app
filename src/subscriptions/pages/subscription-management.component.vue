@@ -5,82 +5,72 @@ import PaymentForm from "@/subscriptions/components/payment-form.component.vue";
 import { useToast } from "primevue/usetoast";
 
 export default {
-    name: "subscription-management-component",
-    components: {
-        "pv-subscription-plan-card": SubscriptionPlanCard,
-        "pv-payment-form": PaymentForm,
-    },
-    data() {
-        return {
-            subscriptionApiService: null,
-            plans: [],
-            selectedPlan: null,
-        };
-    },
-    setup() {
-        const toast = useToast();
-        return { toast };
-    },
-    created() {
-        this.fetchPlans();
-    },
-    methods: {
-        fetchPlans() {
-            // 🔹 CORRECCIÓN: Usar this.$t() para inicializar los datos de los planes
-            this.plans = [
-                {
-                    id: 1,
-                    name: this.$t('subscription.basic_plan_title'),
-                    price: 150.0,
-                    description: this.$t('subscription.basic_plan_description'),
-                    features: [
-                        this.$t('subscription.basic_feature_1'), 
-                        this.$t('subscription.basic_feature_2')
-                    ],
-                    isPopular: false,
-                },
-                {
-                    id: 2,
-                    name: this.$t('subscription.professional_plan_title'),
-                    price: 220.0,
-                    description: this.$t('subscription.professional_plan_description'),
-                    features: [
-                        this.$t('subscription.professional_feature_1'),
-                        this.$t('subscription.professional_feature_2'),
-                        this.$t('subscription.professional_feature_3'),
-                    ],
-                    isPopular: true,
-                },
-                {
-                    id: 3,
-                    name: this.$t('subscription.premium_plan_title'),
-                    price: 300.0,
-                    description: this.$t('subscription.premium_plan_description'),
-                    features: [
-                        this.$t('subscription.premium_feature_1'),
-                        this.$t('subscription.premium_feature_2'),
-                        this.$t('subscription.premium_feature_3'),
-                    ],
-                    isPopular: false,
-                },
-            ];
-            this.selectedPlan = this.plans.find((p) => p.isPopular);
-        },
+  name: "subscription-management-component",
+  components: {
+    "pv-subscription-plan-card": SubscriptionPlanCard,
+    "pv-payment-form": PaymentForm,
+  },
+  data() {
+    return {
+      subscriptionApiService: null,
+      plans: [],
+      selectedPlan: null,
+      loading: true,
+    };
+  },
+  setup() {
+    const toast = useToast();
+    return { toast };
+  },
+  async created() {
+    this.subscriptionApiService = new SubscriptionApiService();
+    await this.fetchPlans();
+  },
+  methods: {
+    mapApiPlan(p) {
+      const features = (p.description || "")
+          .replace(/\.$/, "")
+          .split("+")
+          .map(s => s.trim())
+          .filter(Boolean);
 
-        handlePlanSelection(plan) {
-            this.selectedPlan = plan;
-        },
-
-        handlePaymentSuccess() {
-            this.toast.add({
-                severity: "success",
-                // 🔹 CORRECCIÓN: Usar this.$t() para traducir el summary y el detail
-                summary: this.$t('subscription.Suscripción Exitosa'),
-                detail: this.$t('subscription.Suscrito exitosamente a {0}.', [this.selectedPlan.name]),
-                life: 5000,
-            });
-        },
+      return {
+        id: p.id,                                  // "basic" | "professional" | "premium"
+        name: p.name,                               // ej. "Basic Plan"
+        price: p.amount,                            // número
+        description: p.description,
+        features,
+        isPopular: !!p.popular,
+      };
     },
+
+    async fetchPlans() {
+      try {
+        const apiPlans = await this.subscriptionApiService.getAllPlans();
+        this.plans = (apiPlans || []).map(this.mapApiPlan);
+        this.selectedPlan = this.plans.find(p => p.isPopular) || this.plans[0] || null;
+      } catch (e) {
+        // si hay error, deja la UI vacía sin romper
+        this.plans = [];
+        this.selectedPlan = null;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    handlePlanSelection(plan) {
+      this.selectedPlan = plan;
+    },
+
+    handlePaymentSuccess() {
+      this.toast.add({
+        severity: "success",
+        summary: this.$t("subscription.Suscripción Exitosa"),
+        detail: this.$t("subscription.Suscrito exitosamente a {0}.", [this.selectedPlan?.name || ""]),
+        life: 5000,
+      });
+    },
+  },
 };
 </script>
 

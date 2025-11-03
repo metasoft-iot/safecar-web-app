@@ -208,7 +208,21 @@
   "premium_feature_1": "All Professional Features",
   "premium_feature_2": "Promotional Visibility",
   "premium_feature_3": "Priority Support",
-  "Subscribe to a SafeCar plan to access advanced features and tools for your workshop": "Subscribe to a SafeCar plan to access advanced features and tools for your workshop"
+  "Subscribe to a SafeCar plan to access advanced features and tools for your workshop": "Subscribe to a SafeCar plan to access advanced features and tools for your workshop",
+   "my_subscription_title": "Mi suscripción",
+   "my_subscription_subtitle": "Administra tu plan actual, métodos de pago e historial de facturación.",
+   "current_plan": "Plan actual",
+   "upgrade_btn": "Mejorar plan",
+   "cancel_btn": "Cancelar plan",
+   "per_month": "mes",
+   "renews_on": "Se renueva el",
+   "payment_methods": "Métodos de pago",
+   "add_payment_method": "Agregar método de pago",
+   "expires": "Vence",
+   "primary": "Principal",
+   "make_primary": "Hacer principal",
+   "billing_history": "Historial de pagos",
+   "status": { "paid": "Pagado", "failed": "Fallido", "pending": "Pendiente" }
 },
   "common": {
     "save": "Save",

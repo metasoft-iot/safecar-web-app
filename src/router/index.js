@@ -12,7 +12,7 @@ import DashboardManagementComponent from "@/dashboard/pages/dashboard-management
 import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-management.component.vue";
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
 import SubscriptionManagementComponent from "@/subscriptions/pages/subscription-management.component.vue";
-
+import SubscriptionOverviewPage from "@/subscriptions/pages/subscription-overview.component.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -104,6 +104,14 @@ const router = createRouter({
                     component: SubscriptionManagementComponent, 
                     meta: { title: 'Gestión de Suscripciones' }
                 },
+
+                {
+                    path: 'mechanic/subscriptions/overview',
+                    name: 'subscriptions-overview',
+                    component: SubscriptionOverviewPage,
+                    meta: { title: 'Mi suscripción' }
+                },
+
 
 
             ]
