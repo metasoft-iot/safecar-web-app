@@ -41,6 +41,7 @@ export default {
         description: p.description,
         features,
         isPopular: !!p.popular,
+        stripePriceId: p.stripePriceId || p.id, // Usa el campo real de tu API. Usaré p.id como fallback simulado.
       };
     },
 
