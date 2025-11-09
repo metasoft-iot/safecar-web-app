@@ -182,6 +182,7 @@ export default {
   margin: 0;
   min-height: calc(100vh - 90px);
   transition: padding-top 0.4s ease;
+  padding-bottom: 600px;
 }
 
 /* ✅ Cuando hay plan seleccionado */

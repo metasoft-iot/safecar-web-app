@@ -10,6 +10,7 @@ export class SubscriptionApiService {
     constructor() {
         this.plansEndpoint = "/plans";
         this.subscriptionsEndpoint = "/subscriptions";
+        this.paymentsEndpoint = "/payments";
     }
 
     // ===== PLANES =====
@@ -42,6 +43,25 @@ export class SubscriptionApiService {
     async cancelSubscription() {
         return http.patch(`${this.subscriptionsEndpoint}/1`, { status: "canceled" });
     }
+
+    // ===== PAGOS ===== 💳
+  /**
+   * Crea un nuevo pago en la API Fake (se conecta con /payments)
+   * @param {Payment} paymentData - Objeto del formulario (instancia de Payment)
+   */
+  async createPayment(paymentData) {
+    try {
+      // Si es una instancia de Payment, la convertimos a JSON plano
+      const payload = paymentData instanceof Payment ? { ...paymentData } : paymentData;
+
+      const { data } = await http.post(this.paymentsEndpoint, payload);
+      console.log(" Pago registrado en Fake API:", data);
+      return data;
+    } catch (error) {
+      console.error(" Error al registrar el pago:", error);
+      throw error;
+    }
+  }
 
     // ===== Métodos derivados para tu VISTA “overview” =====
     /**

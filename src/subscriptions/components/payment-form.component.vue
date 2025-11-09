@@ -1,27 +1,27 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import stripePromise from '@/utils/stripe-config';
+import { SubscriptionApiService } from "@/subscriptions/services/subscription-api.service";
+import { Payment } from "@/subscriptions/models/payment.entity"; 
 
 // --- Props y eventos ---
 const props = defineProps({
   selectedPlan: Object,
 });
 const emit = defineEmits(['payment-success']);
+const subscriptionService = new SubscriptionApiService();
 
 // --- Variables reactivas ---
 const toast = useToast();
 const isLoading = ref(false);
 const cardholderName = ref('');
 const billingEmail = ref('');
-const cardType = ref('credito');
-const registrationDate = ref('');
 const country = ref('PE');
 const showErrors = ref(false);
 let cardElement = null;
 
-// --- Stripe ---
+// --- Stripe setup ---
 onMounted(async () => {
   try {
     const stripe = await stripePromise;
@@ -53,7 +53,7 @@ onBeforeUnmount(() => {
   if (cardElement) cardElement.unmount();
 });
 
-// --- Validación reactiva ---
+// --- Validación del formulario ---
 const isFormValid = computed(() => {
   return (
     billingEmail.value.trim() !== '' &&
@@ -62,7 +62,7 @@ const isFormValid = computed(() => {
   );
 });
 
-// --- Función de suscripción ---
+// --- Acción principal ---
 const subscribeNow = async () => {
   showErrors.value = true;
 
@@ -85,30 +85,51 @@ const subscribeNow = async () => {
   }
 
   isLoading.value = true;
+
   try {
     const stripe = await stripePromise;
 
-    const { data } = await axios.post('/api/subscription/create', {
-      priceId: props.selectedPlan.stripePriceId,
-      email: billingEmail.value,
-      cardType: cardType.value,
-      registrationDate: registrationDate.value,
-      cardholderName: cardholderName.value,
+    // ✅ 1. Crear método de pago en Stripe
+    const { paymentMethod, error: paymentError } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+      billing_details: {
+        name: cardholderName.value,
+        email: billingEmail.value,
+      },
     });
+
+    if (paymentError) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error en el pago',
+        detail: paymentError.message,
+      });
+      isLoading.value = false;
+      return;
+    }
+
+    // ✅ 2. Crear entidad Payment antes de enviar al backend
+    const paymentEntity = new Payment(
+      cardholderName.value,
+      billingEmail.value,
+      props.selectedPlan.id,
+      props.selectedPlan.price,
+      paymentMethod.id,
+      'pending'
+    );
+
+    // ✅ 3. Llamada al backend (service)
+    const data = await subscriptionService.createSubscription(paymentEntity);
 
     if (!data.clientSecret)
       throw new Error('El backend no devolvió el clientSecret.');
 
+    // ✅ 4. Confirmar el pago en Stripe
     const { error, setupIntent } = await stripe.confirmCardSetup(
       data.clientSecret,
       {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            name: cardholderName.value,
-            email: billingEmail.value,
-          },
-        },
+        payment_method: paymentMethod.id,
       }
     );
 
@@ -149,7 +170,7 @@ const subscribeNow = async () => {
   <div class="payment-form">
     <h3 class="form-title">Información de Contacto y Pago</h3>
 
-    <!-- 🔹 Sección Contacto -->
+    <!-- 🔹 Contacto -->
     <div class="section">
       <h4>Datos de contacto</h4>
 
@@ -161,7 +182,6 @@ const subscribeNow = async () => {
           placeholder="ejemplo@correo.com"
           class="input"
           :class="{ 'input-error': showErrors && !billingEmail }"
-          required
         />
         <small v-if="showErrors && !billingEmail" class="error-text">
           Este campo es obligatorio
@@ -176,7 +196,6 @@ const subscribeNow = async () => {
           placeholder="Ej: Juan Pérez"
           class="input"
           :class="{ 'input-error': showErrors && !cardholderName }"
-          required
         />
         <small v-if="showErrors && !cardholderName" class="error-text">
           Este campo es obligatorio
@@ -184,7 +203,7 @@ const subscribeNow = async () => {
       </div>
     </div>
 
-    <!-- 🔹 Sección Método de pago -->
+    <!-- 🔹 Método de pago -->
     <div class="section">
       <h4>Método de pago</h4>
 
@@ -227,7 +246,6 @@ const subscribeNow = async () => {
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   width: 100%;
-  padding-bottom: 100px;
 }
 
 .form-title {
@@ -277,7 +295,6 @@ label span {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
-/* 🔹 Validación visual */
 .input-error {
   border-color: #dc2626 !important;
   background-color: #fef2f2;
