@@ -26,8 +26,8 @@ export default defineComponent({
 
 <template>
     <pv-card :class="['shadow-3 h-full flex flex-column transition-all transition-duration-300 cursor-pointer compact-plan-card', 
-                     { 'border-3 border-primary': isSelected || plan.isPopular },
-                     { 'hover:shadow-6': !isSelected }]"
+                       { 'border-3 border-primary': isSelected || plan.isPopular },
+                       { 'hover:shadow-6': !isSelected }]"
              @click="selectPlan"
     >
         <template #header>
@@ -46,17 +46,18 @@ export default defineComponent({
                 <div class="text-sm text-600">{{ $t('subscription.price_per_month') }}</div>
             </div>
         </template>
+        
         <template #content>
-            <div class="px-3">
+            <div class="px-3 flex-grow">
                 <p class="mb-4 text-700 text-sm">{{ plan.description }}</p>
                 <ul class="list-none p-0 m-0">
-                    <li v-for="feature in plan.features" :key="feature" class="flex align-items-center mb-2">
-                        <i class="pi pi-check text-green-500 mr-2"></i>
-                        <span class="text-sm text-700">{{ feature }}</span>
+                    <li v-for="feature in plan.features" :key="feature" class="flex align-items-start mb-2">
+                        <i class="pi pi-check text-green-500 mr-2 mt-1"></i> <span class="text-sm text-700">{{ feature }}</span>
                     </li>
                 </ul>
             </div>
         </template>
+        
         <template #footer>
             <div class="p-3"> 
                 <pv-button 
@@ -65,7 +66,7 @@ export default defineComponent({
                     :severity="isSelected ? 'primary' : 'secondary'" 
                     :outlined="!isSelected"
                     :disabled="isSelected"
-                    class="w-full mt-auto font-bold" 
+                    class="w-full font-bold" 
                 />
             </div>
         </template>
@@ -73,9 +74,24 @@ export default defineComponent({
 </template>
 
 <style scoped>
-/* CLASE CRÍTICA: Sobreescribe el padding del p-card interno para hacerlo más estrecho */
+.compact-plan-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Hace que el contenido y el footer se separen */
+  height: 100%; /* Fuerza que todas las tarjetas tengan la misma altura */
+}
+
+/* Ajusta el cuerpo del card */
 .compact-plan-card :deep(.p-card-body),
 .compact-plan-card :deep(.p-card-content) {
-    padding: 0 !important; /* Eliminamos el padding por defecto */
+  padding: 0 !important;
+  flex-grow: 1; /* El contenido crece para empujar el footer hacia abajo */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Asegura que el footer siempre quede abajo */
+.compact-plan-card :deep(.p-card-footer) {
+  margin-top: auto;
 }
 </style>

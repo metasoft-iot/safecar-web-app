@@ -632,7 +632,8 @@
     "primary": "Principal",
     "make_primary": "Hacer principal",
     "billing_history": "Historial de pagos",
-    "status": { "paid": "Pagado", "failed": "Fallido", "pending": "Pendiente" }
+    "status": { "paid": "Pagado", "failed": "Fallido", "pending": "Pendiente" },
+    "Selected Plan": "PLan seleccionado"
   },
     "errors": {
     "server_error": "Error del servidor",

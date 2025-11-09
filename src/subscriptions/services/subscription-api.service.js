@@ -19,14 +19,19 @@ export class SubscriptionApiService {
     }
 
     // ===== SUSCRIPCIÓN (objeto único en db.json) =====
+
+    async createSubscription(subscriptionData) {
+        try {
+            const response = await http.post(this.subscriptionsEndpoint, subscriptionData); 
+            return response.data;
+         }catch (error) {    
+            console.error("Error creating subscription:", error);
+            throw error;
+        }
+  }
     async getUserSubscription() {
         const { data } = await http.get(this.subscriptionsEndpoint);
         return data; // { planId, paymentMethod, metadata }
-    }
-
-    async createSubscription(subscriptionData) {
-        // POST sobre el recurso único (fake api)
-        return http.post(this.subscriptionsEndpoint, subscriptionData);
     }
 
     async updateSubscription(subscriptionData) {
