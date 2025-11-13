@@ -172,6 +172,9 @@ export default {
 </template>
 
 <style scoped>
+.body{
+  background-color:  white;
+}
 .subscription-section {
   display: flex;
   justify-content: center;
@@ -182,7 +185,7 @@ export default {
   margin: 0;
   min-height: calc(100vh - 90px);
   transition: padding-top 0.4s ease;
-  padding-bottom: 600px;
+  padding-bottom: 700px;
 }
 
 /* ✅ Cuando hay plan seleccionado */

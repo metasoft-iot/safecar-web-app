@@ -27,12 +27,16 @@ export default defineComponent({
 <template>
     <pv-card :class="['shadow-3 h-full flex flex-column transition-all transition-duration-300 cursor-pointer compact-plan-card', 
                        { 'border-3 border-primary': isSelected || plan.isPopular },
-                       { 'hover:shadow-6': !isSelected }]"
+                       { 'hover:shadow-6': !isSelected },
+                       'relative']"
              @click="selectPlan"
     >
         <template #header>
             <div v-if="plan.isPopular" class="flex justify-content-end">
-                <pv-tag :value="$t('subscription.plan_popular_label')" severity="info" class="font-bold absolute -mt-3 mr-3"></pv-tag>
+                <pv-tag :value="$t('subscription.plan_popular_label')" 
+                        severity="info" 
+                        class="font-bold absolute -mt-3 mr-3"
+                ></pv-tag>
             </div>
         </template>
         <template #title>

@@ -13,6 +13,7 @@ import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-manag
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
 import SubscriptionManagementComponent from "@/subscriptions/pages/subscription-management.component.vue";
 import SubscriptionOverviewPage from "@/subscriptions/pages/subscription-overview.component.vue";
+import AddPaymentFormComponent from "@/subscriptions/pages/add-payment-form.component.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -110,6 +111,12 @@ const router = createRouter({
                     name: 'subscriptions-overview',
                     component: SubscriptionOverviewPage,
                     meta: { title: 'Mi suscripción' }
+                },
+                {
+                    path: 'mechanic/subscriptions/add-payment', 
+                    name: 'add-payment-method', // ESTE NOMBRE ES EL QUE DEBES USAR EN $router.push()
+                    component: AddPaymentFormComponent, // ¡Asegúrate de que este componente exista!
+                    meta: { title: 'Agregar método de pago' }
                 },
 
 

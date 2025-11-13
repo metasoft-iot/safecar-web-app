@@ -217,15 +217,24 @@
    "per_month": "mes",
    "renews_on": "Se renueva el",
    "payment_methods": "Métodos de pago",
-   "add_payment_method": "Agregar método de pago",
+   "add_payment_method": "Add Payment Method",
    "expires": "Vence",
    "primary": "Principal",
    "make_primary": "Hacer principal",
    "billing_history": "Historial de pagos",
    "status": { "paid": "Pagado", "failed": "Fallido", "pending": "Pendiente" },
-   "Selected Plan": "Selected Plan"
-   
+   "Selected Plan": "Selected Plan",
+   "new_payment_method": "New Payment Method",
+  "loading": "Loading...",
+  "upgrade_title": "Plan Improvement",
+  "upgrade_body": "You will be redirected to select and pay for your new plan.",
+  "cancel_title": "Scheduled Cancellation",
+  "cancel_body": "Your plan will be canceled at the end of the billing cycle.",
+  "error_cancel": "Your subscription could not be cancelled. Please try again.",
+  "confirm_cancel_title": "Confirm Cancellation",
+  "confirm_cancel_modal_text": "Are you sure you want to cancel your subscription? You will lose access to premium features at the end of the current billing cycle."
 },
+
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -246,7 +255,9 @@
     "date_format": "dd/mm/yyyy",
     "currency": "S/",
     "km": "km",
-    "na": "N/A"
+    "na": "N/A",
+    "keep_subscription_btn": "Maintain subscription",
+    "confirm_cancel_btn": "Yes, cancel plan"
   },
   "dashboard": {
     "title": "Executive Dashboard",

@@ -224,14 +224,14 @@ const subscribeNow = async () => {
       </div>
     </div>
 
-    <Button
-      label="Completar Suscripción"
-      icon="pi pi-lock"
-      class="submit-btn"
-      :loading="isLoading"
-      @click="subscribeNow"
-      :disabled="!isFormValid"
-    />
+  <pv-button
+    label="Completar Suscripción"
+    icon="pi pi-lock"
+    class="submit-btn"
+    :loading="isLoading"
+    @click="subscribeNow"
+    :disabled="!isFormValid"
+  />
   </div>
 </template>
 
@@ -240,7 +240,10 @@ const subscribeNow = async () => {
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
-  padding: 1.75rem;
+  padding-top: 1.75rem; /* Mantén el padding superior original */
+  padding-right: 2.75rem; /* Mantén el padding derecho original */
+  padding-left: 2.75rem; /* Mantén el padding izquierdo original */
+  padding-bottom: 7rem; /* Ejemplo: 7rem o el valor que necesites */
   background-color: #ffffff;
   border-radius: 14px;
   border: 1px solid #e5e7eb;

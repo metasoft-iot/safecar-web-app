@@ -633,7 +633,21 @@
     "make_primary": "Hacer principal",
     "billing_history": "Historial de pagos",
     "status": { "paid": "Pagado", "failed": "Fallido", "pending": "Pendiente" },
-    "Selected Plan": "PLan seleccionado"
+    "Selected Plan": "PLan seleccionado",
+  "new_payment_method": "Nuevo Método de Pago",
+
+  "loading": "Cargando datos de suscripción...",
+  "upgrade_title": "Mejora de Plan",
+  "upgrade_body": "Serás redirigido para seleccionar y pagar tu nuevo plan.",
+  "cancel_title": "Cancelación Programada",
+  "cancel_body": "Tu plan se cancelará al final del ciclo de facturación.",
+  "error_cancel": "No se pudo cancelar la suscripción. Inténtalo de nuevo.",
+  "confirm_cancel_title": "Confirmar Cancelación",
+  "confirm_cancel_modal_text": "¿Estás seguro de que quieres cancelar tu suscripción? Perderás acceso a las funciones premium al final del ciclo de facturación actual."
+  },
+  "common": {
+    "keep_subscription_btn": "Mantener suscripción",
+    "confirm_cancel_btn": "Sí, cancelar plan"
   },
     "errors": {
     "server_error": "Error del servidor",

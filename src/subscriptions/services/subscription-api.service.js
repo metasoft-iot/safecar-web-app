@@ -92,20 +92,23 @@ export class SubscriptionApiService {
      * Deriva un método de pago “principal” desde subscriptions.paymentmethod
      * Devuelve: [{ id, brand, last4, exp, isPrimary, icon }]
      */
-    async getPaymentMethods() {
+async getPaymentMethods() {
         const sub = await this.getUserSubscription();
         const pm = sub?.paymentmethod || {};
         const last4 = (pm.cardNumber || "").replace(/\s/g, "").slice(-4) || "0000";
-        const exp = (pm.expirationDate || "").replace("-", "/"); // por si viene 11/28 ya está ok
+        const exp = (pm.expirationDate || "").replace("-", "/");
 
         const brand = pm.cardType || "Card";
         const brandLower = String(brand).toLowerCase();
-        const icon =
-            brandLower.includes("visa")
-                ? "/assets/cards/visa.png"
-                : brandLower.includes("master")
-                    ? "/assets/cards/mastercard.png"
-                    : "/assets/cards/card.png";
+        
+        // 🛑 Lógica para devolver la CLASE de PrimeIcon
+        let iconClass = "pi pi-credit-card"; // Icono por defecto (genérico)
+        
+        if (brandLower.includes("visa")) {
+            iconClass = "pi pi-visa";
+        } else if (brandLower.includes("master")) {
+            iconClass = "pi pi-mastercard";
+        }
 
         return [
             {
@@ -114,7 +117,8 @@ export class SubscriptionApiService {
                 last4,
                 exp,
                 isPrimary: true,
-                icon,
+                // Eliminamos 'icon' y añadimos 'iconClass'
+                iconClass: iconClass, 
             },
         ];
     }
@@ -144,4 +148,18 @@ export class SubscriptionApiService {
         });
         return items;
     }
+
+    async getSetupIntentClientSecret() {
+    console.log("Simulando obtención de SetupIntent Client Secret...");
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simula latencia de red
+    
+    const fakeClientSecret = "seti_1P24GjASkU2f87o0xQZ3j3nZ_secret_ABCDEFGHIJKLMN"; 
+
+    return { clientSecret: fakeClientSecret };
+}
+async savePaymentMethodId(paymentMethodId) {
+    console.log(`Simulando guardar PaymentMethod ID: ${paymentMethodId} en el backend.`);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return true;
+}
 }
