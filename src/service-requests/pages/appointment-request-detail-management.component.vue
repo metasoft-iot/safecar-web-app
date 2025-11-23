@@ -3,6 +3,7 @@
 import AppointmentRequestDescription from "../components/appointment-request-description.component.vue";
 import AppointmentRequestActions from "../components/appointment-request-actions.component.vue";
 import {AppointmentRequestApiService} from "../services/appointment-request-api.service.js";
+import {MechanicApiService} from "../../workshop/services/mechanic-api.service.js";
 import {AppointmentRequest} from "../models/appointment-request.entity.js";
 
 export default {
@@ -15,7 +16,8 @@ export default {
     return {
 
       // Servicio para obtener detalles de la cita por ID
-      appointmentRequestApiService: new AppointmentRequestApiService('/appointments'),
+      appointmentRequestApiService: new AppointmentRequestApiService(),
+      mechanicApiService: new MechanicApiService(),
 
       mechanicsArray: [],
 
@@ -155,40 +157,30 @@ export default {
       }, 4000);
     },
 
-    // Obtener lista de mecánicos disponibles (mock por ahora)
-    getAllMechanics() {
-      // Lógica para obtener lista de mecánicos activos
+    // Obtener lista de mecánicos disponibles
+    async getAllMechanics() {
       console.log(this.$t('appointment_detail.mechanics.get_available'));
-      
-      // Mock data para mecánicos
-      this.mechanicsArray = [
-        {
-          id: 'mech_001',
-          fullName: 'Carlos Méndez',
-          specialization: 'Motor y transmisión',
-          contactNumber: '999-888-777',
-          email: 'carlos.mendez@safecar.com',
-          status: 'DISPONIBLE'
-        },
-        {
-          id: 'mech_002', 
-          fullName: 'Ana García',
-          specialization: 'Frenos y suspensión',
-          contactNumber: '999-777-666',
-          email: 'ana.garcia@safecar.com',
-          status: 'DISPONIBLE'
-        },
-        {
-          id: 'mech_003',
-          fullName: 'Luis Torres',
-          specialization: 'Sistema eléctrico',
-          contactNumber: '999-666-555',
-          email: 'luis.torres@safecar.com',
-          status: 'OCUPADO'
-        }
-      ];
-
-      console.log(this.$t('appointment_detail.mechanics.list_obtained'), this.mechanicsArray);
+      try {
+        const workshopId = await this.mechanicApiService.getCurrentWorkshopId();
+        const response = await this.mechanicApiService.getAllByWorkshopId(workshopId);
+        this.mechanicsArray = response.data.map(m => ({
+            id: m.id,
+            fullName: `Mechanic ${m.id}`, // Backend doesn't return name yet, only profileId. 
+            // To get name, we need to fetch Profile. This is getting complicated.
+            // For now, I'll show "Mechanic ID: X" or try to fetch profile if possible.
+            // Actually, MechanicResource has profileId.
+            // I can't easily get name without N+1 queries.
+            // I'll just show ID for now or "Mechanic" + ID.
+            // Wait, Mechanic entity has specializations.
+            specialization: m.specializations ? m.specializations.map(s => s.name).join(', ') : 'General',
+            contactNumber: 'N/A',
+            email: 'N/A',
+            status: 'DISPONIBLE'
+        }));
+      } catch (error) {
+        console.error("Error loading mechanics:", error);
+        this.mechanicsArray = [];
+      }
     },
 
     // Manejar actualizaciones de la cita desde componentes hijos
@@ -216,7 +208,8 @@ export default {
     console.log(`Cargar detalles de la cita con ID: ${appointmentId}`);
 
     // Inicializar servicios
-    this.appointmentRequestApiService = new AppointmentRequestApiService('/appointments');
+    this.appointmentRequestApiService = new AppointmentRequestApiService();
+    this.mechanicApiService = new MechanicApiService();
 
     if (appointmentId) {
       this.getAppointmentDetailsById(appointmentId);

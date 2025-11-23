@@ -1,4 +1,6 @@
 <script>
+import {AuthenticationService} from "../services/authentication.service";
+
 export default {
   name: "sign-up",
 
@@ -17,6 +19,8 @@ export default {
       password: '',
       confirmPassword: '',
       aceptarTerminos: false,
+
+      authenticationService: new AuthenticationService(),
 
       touched: {
         nombreTaller: false,
@@ -54,7 +58,7 @@ export default {
   },
 
   methods: {
-    onSignUp() {
+    async onSignUp() {
       // Marcar todos los campos como tocados
       Object.keys(this.touched).forEach(key => {
         this.touched[key] = true;
@@ -62,29 +66,66 @@ export default {
 
       // Validar campos obligatorios
       if (!this.isFormValid) {
-        this.$toast.add({ severity: 'error', summary: this.$t('common.error'), detail: this.$t('auth.sign_up.complete_fields_correctly'), life: 3000 });
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Please complete all fields correctly', life: 3000 });
         return;
       }
 
       // Validar que las contraseñas coincidan
       if (!this.passwordsMatch) {
-        this.$toast.add({ severity: 'error', summary: this.$t('common.error'), detail: this.$t('auth.sign_up.passwords_not_match'), life: 3000 });
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Passwords do not match', life: 3000 });
         return;
       }
 
       // Validar términos y condiciones
       if (!this.aceptarTerminos) {
-        this.$toast.add({ severity: 'error', summary: this.$t('common.error'), detail: this.$t('auth.sign_up.must_accept_terms'), life: 3000 });
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'You must accept the terms and conditions', life: 3000 });
         return;
       }
 
-      // Simular registro exitoso
-      this.$toast.add({ severity: 'success', summary: this.$t('common.success'), detail: this.$t('auth.sign_up.registration_success'), life: 3000 });
+      const user = {
+        email: this.correoTaller,
+        password: this.password,
+        confirmPassword: this.confirmPassword,
+        roles: ["ROLE_WORKSHOP"]
+      };
 
-      // Redirigir al login después del registro
-      setTimeout(() => {
-        this.$router.push({ name: 'sign-in' });
-      }, 2000);
+      try {
+        // 1. Sign Up
+        await this.authenticationService.signUp(user);
+        
+        // 2. Sign In to get token
+        const signInResponse = await this.authenticationService.signIn({ email: this.correoTaller, password: this.password });
+        const token = signInResponse.data.token;
+        const userId = signInResponse.data.id;
+        const username = signInResponse.data.username;
+        
+        // Save token for the next request
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('email', username);
+
+        // 3. Create Business Profile
+        const businessProfile = {
+          businessName: this.nombreTaller,
+          ruc: this.ruc,
+          businessAddress: this.direccionTaller,
+          contactPhone: this.telefonoTaller,
+          contactEmail: this.correoTaller
+        };
+
+        await this.authenticationService.createBusinessProfile(this.correoTaller, businessProfile);
+
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Registration successful', life: 3000 });
+        
+        // Redirect to dashboard or sign-in
+        setTimeout(() => {
+          this.$router.push({ name: 'sign-in' });
+        }, 2000);
+
+      } catch (error) {
+        console.error(error);
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Registration failed: ' + (error.response?.data?.message || error.message), life: 5000 });
+      }
     },
 
     onFieldBlur(fieldName) {

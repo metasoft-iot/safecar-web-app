@@ -1,4 +1,4 @@
-import {createRouter, createWebHistory} from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 import SignInComponent from "@/security/pages/sign-in.component.vue";
 import SignUpComponent from "@/security/pages/sign-up.component.vue";
 import LayoutSafeCarComponent from "@/public/pages/layout-safe-car.component.vue";
@@ -11,6 +11,7 @@ import AppointmentRequestDetailManagementComponent
 import DashboardManagementComponent from "@/dashboard/pages/dashboard-management.component.vue";
 import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-management.component.vue";
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
+import MechanicManagementComponent from "@/workshop/pages/mechanic-management.component.vue";
 
 
 
@@ -19,21 +20,21 @@ const router = createRouter({
     routes: [
 
 
-        {path: '/:pathMatch(.*)*', redirect: '/sign-in'},
+        { path: '/:pathMatch(.*)*', redirect: '/sign-in' },
 
 
         {
             path: '',
             name: 'sign-in',
             component: SignInComponent,
-            meta: { title: 'Login'}
+            meta: { title: 'Login' }
         },
 
         {
             path: '/sign-in',
             name: 'sign-in',
             component: SignInComponent,
-            meta: { title: 'Login'}
+            meta: { title: 'Login' }
         },
 
 
@@ -41,20 +42,20 @@ const router = createRouter({
             path: '/sign-up',
             name: 'sign-up',
             component: SignUpComponent,
-            meta: { title: 'Registro de Taller'}
+            meta: { title: 'Registro de Taller' }
         },
 
 
         {
-            path: '/safe-car', name: 'safe-car', component: LayoutSafeCarComponent, meta: {title: 'SafeCar'},
+            path: '/safe-car', name: 'safe-car', component: LayoutSafeCarComponent, meta: { title: 'SafeCar' },
             redirect: { name: 'mechanic-dashboard' },
             children: [
 
                 // =================== Rutas de dashboard ejecutivo ========================
                 {
-                    path : 'mechanic/dashboard',
-                    name : 'mechanic-dashboard',
-                    component : DashboardManagementComponent,
+                    path: 'mechanic/dashboard',
+                    name: 'mechanic-dashboard',
+                    component: DashboardManagementComponent,
                     meta: { title: 'Dashboard Ejecutivo' }
                 },
                 // ========================================================================
@@ -68,7 +69,7 @@ const router = createRouter({
                 },
                 {
                     path: 'mechanic/appointment-request-details',
-                    name:  'appointment-request-details',
+                    name: 'appointment-request-details',
                     component: AppointmentRequestDetailManagementComponent,
                     meta: { title: 'Detalles de Solicitud de Servicio' }
                 },
@@ -95,6 +96,15 @@ const router = createRouter({
                     name: 'vehicle-details',
                     component: VehicleDetailManagementComponent,
                     meta: { title: 'Detalles del Vehículo' }
+                },
+                // =========================================================================
+
+                // =================== Rutas para la gestion de mecánicos ==================
+                {
+                    path: 'mechanic/management',
+                    name: 'mechanic-management',
+                    component: MechanicManagementComponent,
+                    meta: { title: 'Gestión de Mecánicos' }
                 },
                 // =========================================================================
 

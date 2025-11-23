@@ -1,5 +1,5 @@
 <script>
-
+import {AuthenticationService} from "../services/authentication.service";
 
 export default {
   name: "sign-in",
@@ -8,7 +8,7 @@ export default {
     return {
       username: '',
       password: '',
-      isAuthenticated: false,
+      authenticationService: new AuthenticationService(),
       touched: {
         username: false,
         password: false
@@ -18,21 +18,35 @@ export default {
 
   methods: {
     onSignIn() {
-      // Marcar todos los campos como tocados al intentar enviar
       this.touched.username = true;
       this.touched.password = true;
 
-      // Validar que ambos campos estén llenos
       if (!this.username || !this.password) {
-        this.$toast.add({ severity: 'error', summary: this.$t('common.error'), detail: this.$t('auth.sign_in.complete_fields'), life: 3000 });
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Please complete all fields', life: 3000 });
         return;
       }
 
-      // Aquí iría la lógica real de autenticación
-      // Simulación de autenticación exitosa
-      this.isAuthenticated = true;
-      this.$toast.add({ severity: 'success', summary: this.$t('common.success'), detail: this.$t('auth.sign_in.success_message'), life: 3000 });
-      this.$router.push( { name: 'safe-car' } );
+      const user = {
+        email: this.username,
+        password: this.password
+      };
+
+      this.authenticationService.signIn(user)
+          .then(response => {
+            const token = response.data.token;
+            const userId = response.data.id;
+            const username = response.data.username;
+            localStorage.setItem('token', token);
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('email', username);
+            
+            this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Signed in successfully', life: 3000 });
+            this.$router.push({ name: 'safe-car' });
+          })
+          .catch(error => {
+            console.error(error);
+            this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Invalid credentials', life: 3000 });
+          });
     },
 
     onUsernameBlur() {
@@ -44,7 +58,6 @@ export default {
     }
   }
 }
-
 </script>
 
 <template>
