@@ -4,6 +4,7 @@ import AppointmentRequestDescription from "../components/appointment-request-des
 import AppointmentRequestActions from "../components/appointment-request-actions.component.vue";
 import {AppointmentRequestApiService} from "../services/appointment-request-api.service.js";
 import {MechanicApiService} from "../../workshop/services/mechanic-api.service.js";
+import {ProfileApiService} from "../../shared/services/profile-api.service.js";
 import {AppointmentRequest} from "../models/appointment-request.entity.js";
 
 export default {
@@ -18,6 +19,7 @@ export default {
       // Servicio para obtener detalles de la cita por ID
       appointmentRequestApiService: new AppointmentRequestApiService(),
       mechanicApiService: new MechanicApiService(),
+      profileApiService: new ProfileApiService(),
 
       mechanicsArray: [],
 
@@ -157,26 +159,55 @@ export default {
       }, 4000);
     },
 
-    // Obtener lista de mecánicos disponibles
+    // Obtener lista de mecánicos disponibles con sus nombres desde profiles
     async getAllMechanics() {
       console.log(this.$t('appointment_detail.mechanics.get_available'));
       try {
         const workshopId = await this.mechanicApiService.getCurrentWorkshopId();
         const response = await this.mechanicApiService.getAllByWorkshopId(workshopId);
-        this.mechanicsArray = response.data.map(m => ({
-            id: m.id,
-            fullName: `Mechanic ${m.id}`, // Backend doesn't return name yet, only profileId. 
-            // To get name, we need to fetch Profile. This is getting complicated.
-            // For now, I'll show "Mechanic ID: X" or try to fetch profile if possible.
-            // Actually, MechanicResource has profileId.
-            // I can't easily get name without N+1 queries.
-            // I'll just show ID for now or "Mechanic" + ID.
-            // Wait, Mechanic entity has specializations.
-            specialization: m.specializations ? m.specializations.map(s => s.name).join(', ') : 'General',
-            contactNumber: 'N/A',
-            email: 'N/A',
-            status: 'DISPONIBLE'
-        }));
+        
+        // Fetch profile information for each mechanic
+        const mechanicsWithProfiles = await Promise.all(
+          response.data.map(async (m) => {
+            try {
+              // Fetch profile by profileId
+              const profileResponse = await this.profileApiService.getPersonProfileById(m.profileId);
+              const profile = profileResponse.data;
+              
+              return {
+                id: m.id,
+                profileId: m.profileId,
+                fullName: profile.fullName || `Mecánico #${m.profileId}`,
+                specialization: m.specializations && m.specializations.length > 0 
+                  ? m.specializations.join(', ') 
+                  : 'General',
+                yearsOfExperience: m.yearsOfExperience || 0,
+                contactNumber: profile.phone || 'N/A',
+                email: 'N/A', // Email is not in PersonProfile, would need user email
+                city: profile.city || 'N/A',
+                status: 'DISPONIBLE' // This could be calculated based on active appointments
+              };
+            } catch (profileError) {
+              console.warn(`Could not fetch profile for mechanic ${m.id}:`, profileError);
+              // Return mechanic without profile data
+              return {
+                id: m.id,
+                profileId: m.profileId,
+                fullName: `Mecánico #${m.profileId}`,
+                specialization: m.specializations && m.specializations.length > 0 
+                  ? m.specializations.join(', ') 
+                  : 'General',
+                yearsOfExperience: m.yearsOfExperience || 0,
+                contactNumber: 'N/A',
+                email: 'N/A',
+                status: 'DISPONIBLE'
+              };
+            }
+          })
+        );
+        
+        this.mechanicsArray = mechanicsWithProfiles;
+        console.log('Mapped mechanics with profiles:', this.mechanicsArray);
       } catch (error) {
         console.error("Error loading mechanics:", error);
         this.mechanicsArray = [];

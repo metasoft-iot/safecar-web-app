@@ -20,6 +20,7 @@ export default {
       // Estados de carga y procesamiento
       isAssigningMechanic: false,
       isAddingNote: false,
+      isChangingStatus: false,
       
       // Estados de edición para secciones específicas
       editingStates: {
@@ -53,7 +54,7 @@ export default {
     
     selectedMechanicInfo() {
       if (!this.selectedMechanic) return null;
-      return this.availableMechanics.find(mechanic => mechanic.mechanicId === this.selectedMechanic);
+      return this.availableMechanics.find(mechanic => mechanic.id === this.selectedMechanic);
     },
     
     // Validación en tiempo real para los campos de asignación
@@ -118,8 +119,10 @@ export default {
         };
         
         // Si ya hay un mecánico asignado, pre-seleccionarlo en el dropdown
-        if (this.item.assignedMechanic && this.item.assignedMechanic.mechanicId) {
-          this.selectedMechanic = this.item.assignedMechanic.mechanicId;
+        if (this.item.mechanicId) {
+          this.selectedMechanic = this.item.mechanicId;
+        } else if (this.item.assignedMechanic && this.item.assignedMechanic.id) {
+          this.selectedMechanic = this.item.assignedMechanic.id;
         }
       } else if (section === 'observations') {
         this.originalData.observations = {
@@ -155,7 +158,7 @@ export default {
         return;
       }
 
-      const selectedMechanicData = this.availableMechanics.find(m => m.mechanicId === this.selectedMechanic);
+      const selectedMechanicData = this.availableMechanics.find(m => m.id === this.selectedMechanic);
       if (!selectedMechanicData) {
         this.showToast('error', 'Error', 'El mecánico seleccionado no está disponible');
         return;
@@ -168,28 +171,113 @@ export default {
       
       this.isAssigningMechanic = true;
       try {
-        const updateData = {
+        // Usar el endpoint correcto para asignar mecánico
+        await this.appointmentRequestApiService.assignMechanic(
+          this.item.appointmentId, 
+          this.selectedMechanic
+        );
+        
+        // Actualizar el item local con el mecánico asignado
+        const updatedItem = {
           ...this.item,
+          mechanicId: this.selectedMechanic,
           assignedMechanic: selectedMechanicData,
           lastModified: new Date().toISOString()
         };
         
-        // Llamar al servicio API
-        await this.appointmentRequestApiService.update(this.item.appointmentId, updateData);
-        
         // Emitir evento para actualizar el componente padre
-        this.$emit('appointment-updated', updateData);
+        this.$emit('appointment-updated', updatedItem);
         
         // Deshabilitar modo edición y limpiar estado
         this.editingStates.mechanic = false;
         this.originalData.mechanic = {};
         this.selectedMechanic = null;
         
-        this.showToast('success', 'Mecánico Asignado', `${selectedMechanicData.fullName} ha sido asignado exitosamente a la cita`);
+        this.showToast('success', 'Mecánico Asignado', `${selectedMechanicData.fullName || 'Mecánico'} ha sido asignado exitosamente a la cita`);
       } catch (error) {
         this.handleError('Error al asignar el mecánico', error);
       } finally {
         this.isAssigningMechanic = false;
+      }
+    },
+
+    // Confirmar cita (cambiar status a CONFIRMED)
+    async confirmAppointment() {
+      this.isChangingStatus = true;
+      try {
+        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'CONFIRMED');
+        
+        const updatedItem = {
+          ...this.item,
+          status: 'CONFIRMED'
+        };
+        
+        this.$emit('appointment-updated', updatedItem);
+        this.showToast('success', 'Cita Confirmada', 'La cita ha sido confirmada exitosamente');
+      } catch (error) {
+        this.handleError('Error al confirmar la cita', error);
+      } finally {
+        this.isChangingStatus = false;
+      }
+    },
+
+    // Iniciar servicio (cambiar status a IN_PROGRESS)
+    async startAppointment() {
+      this.isChangingStatus = true;
+      try {
+        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'IN_PROGRESS');
+        
+        const updatedItem = {
+          ...this.item,
+          status: 'IN_PROGRESS'
+        };
+        
+        this.$emit('appointment-updated', updatedItem);
+        this.showToast('success', 'Servicio Iniciado', 'El servicio ha sido iniciado');
+      } catch (error) {
+        this.handleError('Error al iniciar el servicio', error);
+      } finally {
+        this.isChangingStatus = false;
+      }
+    },
+
+    // Completar servicio (cambiar status a COMPLETED)
+    async completeAppointment() {
+      this.isChangingStatus = true;
+      try {
+        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'COMPLETED');
+        
+        const updatedItem = {
+          ...this.item,
+          status: 'COMPLETED'
+        };
+        
+        this.$emit('appointment-updated', updatedItem);
+        this.showToast('success', 'Servicio Completado', 'El servicio ha sido completado exitosamente');
+      } catch (error) {
+        this.handleError('Error al completar el servicio', error);
+      } finally {
+        this.isChangingStatus = false;
+      }
+    },
+
+    // Cancelar cita (cambiar status a CANCELLED)
+    async cancelAppointment() {
+      this.isChangingStatus = true;
+      try {
+        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'CANCELLED');
+        
+        const updatedItem = {
+          ...this.item,
+          status: 'CANCELLED'
+        };
+        
+        this.$emit('appointment-updated', updatedItem);
+        this.showToast('info', 'Cita Cancelada', 'La cita ha sido cancelada');
+      } catch (error) {
+        this.handleError('Error al cancelar la cita', error);
+      } finally {
+        this.isChangingStatus = false;
       }
     },
 
@@ -289,7 +377,7 @@ export default {
               v-model="selectedMechanic"
               :options="availableMechanics"
               optionLabel="fullName"
-              optionValue="mechanicId"
+              optionValue="id"
               placeholder="Seleccionar mecánico disponible"
               class="w-full mt-1"
               :class="{ 'p-invalid': editingStates.mechanic && !selectedMechanic }"
@@ -413,6 +501,49 @@ export default {
               {{ getStatusDisplayText(item.status || 'PENDING') }}
             </span>
           </div>
+        </div>
+
+        <!-- Acciones de estado -->
+        <div class="flex flex-column gap-2 w-full mt-3">
+          <!-- Botón Confirmar Cita (solo visible si está en PENDING) -->
+          <pv-button
+              v-if="item.status === 'PENDING'"
+              label="Confirmar Cita"
+              icon="pi pi-check"
+              class="p-button-success w-full"
+              @click="confirmAppointment"
+              :loading="isChangingStatus"
+          />
+          
+          <!-- Botón Iniciar Servicio (solo visible si está CONFIRMED) -->
+          <pv-button
+              v-if="item.status === 'CONFIRMED'"
+              label="Iniciar Servicio"
+              icon="pi pi-play"
+              class="p-button-info w-full"
+              @click="startAppointment"
+              :loading="isChangingStatus"
+          />
+          
+          <!-- Botón Completar Servicio (solo visible si está IN_PROGRESS) -->
+          <pv-button
+              v-if="item.status === 'IN_PROGRESS'"
+              label="Completar Servicio"
+              icon="pi pi-check-circle"
+              class="p-button-success w-full"
+              @click="completeAppointment"
+              :loading="isChangingStatus"
+          />
+          
+          <!-- Botón Cancelar Cita (visible si NO está COMPLETED o CANCELLED) -->
+          <pv-button
+              v-if="!['COMPLETED', 'CANCELLED'].includes(item.status)"
+              label="Cancelar Cita"
+              icon="pi pi-times"
+              class="p-button-danger w-full"
+              @click="cancelAppointment"
+              :loading="isChangingStatus"
+          />
         </div>
       </template>
     </pv-card>
