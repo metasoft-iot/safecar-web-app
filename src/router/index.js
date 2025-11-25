@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import SignInComponent from "@/security/pages/sign-in.component.vue";
 import SignUpComponent from "@/security/pages/sign-up.component.vue";
+import PaymentSuccessComponent from "@/security/pages/payment-success.component.vue";
+import PaymentCancelComponent from "@/security/pages/payment-cancel.component.vue";
 import LayoutSafeCarComponent from "@/public/pages/layout-safe-car.component.vue";
 import serviceHistoryManagementComponent
     from "@/service-history/pages/service-history-management.component.vue";
@@ -46,6 +48,19 @@ const router = createRouter({
             meta: { title: 'Registro de Taller' }
         },
 
+        {
+            path: '/payment/success',
+            name: 'payment-success',
+            component: PaymentSuccessComponent,
+            meta: { title: 'Payment Successful' }
+        },
+
+        {
+            path: '/payment/cancel',
+            name: 'payment-cancel',
+            component: PaymentCancelComponent,
+            meta: { title: 'Payment Cancelled' }
+        },
 
         {
             path: '/safe-car', name: 'safe-car', component: LayoutSafeCarComponent, meta: { title: 'SafeCar' },

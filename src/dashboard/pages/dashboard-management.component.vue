@@ -1,6 +1,8 @@
 <script>
 import { MechanicApiService } from "../../workshop/services/mechanic-api.service";
 import { AppointmentRequestApiService } from "../../service-requests/services/appointment-request-api.service";
+import http from "../../shared/services/http-common";
+
 
 export default {
   name: 'dashboard-management',
@@ -40,7 +42,52 @@ export default {
         
         // 3. Fetch Appointments
         const appointmentsResponse = await this.appointmentService.getAll();
-        this.appointments = appointmentsResponse.data;
+        const appointments = appointmentsResponse.data || [];
+        
+        // 4. Enrich appointments with vehicle and driver data
+        this.appointments = await Promise.all(
+          appointments.map(async (app) => {
+            let enrichedApp = { ...app };
+
+            // Get vehicle data
+            if (app.vehicleId) {
+              try {
+                const vehicleResponse = await http.get(`/vehicles/${app.vehicleId}`);
+                enrichedApp.vehicle = {
+                  brand: vehicleResponse.data.brand || 'Unknown',
+                  model: vehicleResponse.data.model || '',
+                  licensePlate: vehicleResponse.data.licensePlate || 'N/A'
+                };
+              } catch (error) {
+                console.warn(`Could not fetch vehicle ${app.vehicleId}`);
+                enrichedApp.vehicle = null;
+              }
+            }
+
+            // Get driver data (customer)
+            if (app.driverId) {
+              try {
+                const profileResponse = await http.get(`/person-profiles/${app.driverId}`);
+                const fullName = profileResponse.data.fullName || 'N/A';
+                enrichedApp.customer = {
+                  firstName: fullName.split(' ')[0] || 'N/A',
+                  lastName: fullName.split(' ').slice(1).join(' ') ||''
+                };
+              } catch (error) {
+                console.warn(`Could not fetch driver profile ${app.driverId}`);
+                enrichedApp.customer = null;
+              }
+            }
+
+            // Add appointment request with proper date formatting
+            enrichedApp.appointmentRequest = {
+              scheduledDate: app.startAt || null,
+              startTime: app.startAt ? app.startAt.split('T')[1]?.substring(0, 5) : null
+            };
+
+            return enrichedApp;
+          })
+        );
         
         // Calculate Stats
         this.totalAppointments = this.appointments.length;

@@ -71,6 +71,9 @@ export default {
     filteredItemsArray() {
       let filtered = [...this.itemsArray]; // Copia del array original para filtrar sin mutar el original
 
+      // EXCLUIR citas COMPLETED (esas van a Completed Services)
+      filtered = filtered.filter(request => request.status !== 'COMPLETED');
+
       // Filtro por búsqueda global (nombre de cliente, teléfono, placa, marca/modelo, servicio)
       // Solo aplicar filtro si hay contenido real (no null, no undefined, no string vacío o solo espacios)
       if (this.globalFilterValue && this.globalFilterValue.trim().length > 0) {

@@ -3,6 +3,8 @@
 import DataManager from "../../shared/components/data-manager.component.vue";
 import {Vehicle} from "../models/vehicle.entity.js";
 import {VehicleApiService} from "@/vehicle-management/services/vehicle-api.service.js";
+import http from "../../shared/services/http-common";
+
 
 export default {
   name: 'vehicle-management',
@@ -247,93 +249,104 @@ export default {
       }
     },
 
-
-
-    getAll() {
+    async getAll() {
       this.loading = true;
 
-      this.vehicleApiService.getAll().then(response => {
-
+      try {
+        const response = await this.vehicleApiService.getAll();
         console.log('Raw API response (Appointments for Vehicles):', response);
         
-        // Extract unique vehicles from appointments
-        const appointments = response.data;
+        // Filtrar SOLO citas que están EN PROGRESO (vehículos siendo atendidos)
+        const appointments = (response.data || []).filter(app => app.status === 'IN_PROGRESS');
+        console.log('Filtered IN_PROGRESS appointments:', appointments);
+
+        // Extraer vehículos únicos y enriquecer con datos del endpoint /vehicles
         const vehiclesMap = new Map();
 
-        if (Array.isArray(appointments)) {
-            appointments.forEach(app => {
-                if (app.vehicle && !vehiclesMap.has(app.vehicle.vehicleId || app.vehicle.licensePlate)) {
-                    // Enrich vehicle data with appointment info if needed (e.g. owner from app)
-                    const vehicleData = {
-                        ...app.vehicle,
-                        owner: app.customer, // Map customer as owner
-                        // Derive status from appointment if vehicle status is missing
-                        vehicleStatus: app.status === 'IN_PROGRESS' ? 'in-service' : 'active'
-                    };
-                    vehiclesMap.set(app.vehicle.vehicleId || app.vehicle.licensePlate, vehicleData);
+        // Usar Promise.all para obtener los datos de cada vehículo
+        await Promise.all(
+          appointments.map(async (app) => {
+            if (!app.vehicleId) return;
+
+            const vehicleKey = app.vehicleId;
+            if (vehiclesMap.has(vehicleKey)) return; // Skip duplicates
+
+            try {
+              // Obtener datos completos del vehículo  
+              const vehicleResponse = await http.get(`/vehicles/${app.vehicleId}`);
+              const vehicleData = vehicleResponse.data;
+
+              // Obtener datos del owner (driver/person profile)
+              let ownerData = null;
+              if (app.driverId) {
+                try {
+                  const profileResponse = await http.get(`/person-profiles/${app.driverId}`);
+                  ownerData = {
+                    firstName: profileResponse.data.fullName?.split(' ')[0] || 'N/A',
+                    lastName: profileResponse.data.fullName?.split(' ').slice(1).join(' ') || '',
+                    phoneNumber: profileResponse.data.phone || 'N/A',
+                    email: profileResponse.data.email || 'N/A'
+                  };
+                } catch (error) {
+                  console.warn(`Could not fetch driver profile ${app.driverId}:`, error.message);
                 }
-            });
-        }
+              }
+
+              // Combinar datos
+              const enrichedVehicle = {
+                vehicleId: vehicleData.id,
+                licensePlate: vehicleData.licensePlate || 'N/A',
+                brand: vehicleData.brand || 'N/A',
+                model: vehicleData.model || 'N/A',
+                owner: ownerData,
+                vehicleStatus: 'in-service', // En servicio porque está IN_PROGRESS
+                currentAppointmentId: app.id
+              };
+
+              vehiclesMap.set(vehicleKey, enrichedVehicle);
+            } catch (error) {
+              console.warn(`Could not fetch vehicle ${app.vehicleId}:`, error.message);
+            }
+          })
+        );
 
         const vehicles = Array.from(vehiclesMap.values());
-        console.log('Extracted unique vehicles:', vehicles);
+        console.log('Enriched vehicles being serviced:', vehicles);
 
-        // Map API data to expected table structure
+        // Map to table structure
         this.itemsArray = vehicles.map(item => {
-          // Create Vehicle object from API data
           const vehicle = new Vehicle(item);
 
-          // Add calculated and flattened properties for the table
           return {
             ...vehicle,
-            // ID for unique identification
-            id: item.vehicleId || item.id || item.licensePlate,
-
-            // Flattened vehicle fields for the table
-            licensePlate: item.licensePlate || this.$t('vehicle_management.messages.na'),
-            vehicleBrandModel: this.getVehicleBrandModel(item),
+            id: item.vehicleId,
+            licensePlate: item.licensePlate,
+            vehicleBrandModel: `${item.brand} ${item.model}`.trim(),
             currentMileage: item.currentMileage || 0,
             fuelType: item.fuelType || this.$t('vehicle_management.messages.na'),
-
-            // Flattened owner fields for the table
-            ownerName: this.getOwnerFullName(item.owner),
-            ownerPhone: item.owner?.phoneNumber || this.$t('vehicle_management.messages.na'),
-            ownerEmail: item.owner?.email || this.$t('vehicle_management.messages.na'),
-
-            // Telemetry data for the table
+            ownerName: item.owner ? `${item.owner.firstName} ${item.owner.lastName}`.trim() : 'N/A',
+            ownerPhone: item.owner?.phoneNumber || 'N/A',
+            ownerEmail: item.owner?.email || 'N/A',
             fuelLevel: item.telemetry?.fuelLevel || 0,
             engineTemperature: item.telemetry?.engineTemperature || 0,
             batteryVoltage: item.telemetry?.batteryVoltage || 0,
             lastUpdate: item.telemetry?.lastUpdate || null,
-
-            // Maintenance data for the table
-            vehicleStatus: item.vehicleStatus || 'active',
-            nextServiceDate: item.maintenance?.nextServiceDate || null,
-            lastServiceDate: item.maintenance?.lastServiceDate || null,
-
-            // IoT device status
+            vehicleStatus: 'in-service', // Siempre in-service porque filtramos IN_PROGRESS
             iotActiveStatus: item.iotDevice?.isActive || false,
             iotDeviceModel: item.iotDevice?.deviceModel || this.$t('vehicle_management.messages.na'),
-            signalStrength: item.iotDevice?.signalStrength || null,
-
-            // Analytics data
-            averageFuelConsumption: item.analytics?.averageFuelConsumption || null,
-            predictedMaintenanceRisk: item.analytics?.predictedMaintenanceRisk || null,
-
-            // Keep reference to complete object for detailed operations
             fullData: item
           };
         });
 
         console.log('Mapped items for table:', this.itemsArray);
 
-      }).catch(error => {
+      } catch (error) {
         console.error('API Error:', error);
-        this.itemsArray = []; // Clear data on error
+        this.itemsArray = [];
         this.handleServerError(error, 'vehicles');
-      }).finally(() => {
+      } finally {
         this.loading = false;
-      });
+      }
     },
 
     // Mock data for development/testing

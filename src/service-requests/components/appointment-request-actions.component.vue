@@ -173,7 +173,7 @@ export default {
       try {
         // Usar el endpoint correcto para asignar mecánico
         await this.appointmentRequestApiService.assignMechanic(
-          this.item.appointmentId, 
+          this.item.id, 
           this.selectedMechanic
         );
         
@@ -205,7 +205,7 @@ export default {
     async confirmAppointment() {
       this.isChangingStatus = true;
       try {
-        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'CONFIRMED');
+        await this.appointmentRequestApiService.updateStatus(this.item.id, 'CONFIRMED');
         
         const updatedItem = {
           ...this.item,
@@ -214,6 +214,14 @@ export default {
         
         this.$emit('appointment-updated', updatedItem);
         this.showToast('success', 'Cita Confirmada', 'La cita ha sido confirmada exitosamente');
+        
+        // Si no hay mecánico asignado, abrir automáticamente el editor de mecánico
+        if (!this.item.mechanicId && !this.item.assignedMechanic) {
+          setTimeout(() => {
+            this.enableEditing('mechanic');
+            this.showToast('info', 'Asignar Mecánico', 'Por favor, asigne un mecánico para continuar con el servicio', 6000);
+          }, 500);
+        }
       } catch (error) {
         this.handleError('Error al confirmar la cita', error);
       } finally {
@@ -223,9 +231,15 @@ export default {
 
     // Iniciar servicio (cambiar status a IN_PROGRESS)
     async startAppointment() {
+      // Validar que haya un mecánico asignado
+      if (!this.item.mechanicId && !this.item.assignedMechanic) {
+        this.showToast('warn', 'Mecánico Requerido', 'Debe asignar un mecánico antes de iniciar el servicio', 5000);
+        return;
+      }
+
       this.isChangingStatus = true;
       try {
-        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'IN_PROGRESS');
+        await this.appointmentRequestApiService.updateStatus(this.item.id, 'IN_PROGRESS');
         
         const updatedItem = {
           ...this.item,
@@ -243,9 +257,15 @@ export default {
 
     // Completar servicio (cambiar status a COMPLETED)
     async completeAppointment() {
+      // Validar que haya un mecánico asignado
+      if (!this.item.mechanicId && !this.item.assignedMechanic) {
+        this.showToast('warn', 'Mecánico Requerido', 'Debe tener un mecánico asignado para completar el servicio', 5000);
+        return;
+      }
+
       this.isChangingStatus = true;
       try {
-        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'COMPLETED');
+        await this.appointmentRequestApiService.updateStatus(this.item.id, 'COMPLETED');
         
         const updatedItem = {
           ...this.item,
@@ -265,7 +285,7 @@ export default {
     async cancelAppointment() {
       this.isChangingStatus = true;
       try {
-        await this.appointmentRequestApiService.updateStatus(this.item.appointmentId, 'CANCELLED');
+        await this.appointmentRequestApiService.updateStatus(this.item.id, 'CANCELLED');
         
         const updatedItem = {
           ...this.item,
@@ -304,7 +324,7 @@ export default {
           lastModified: new Date().toISOString()
         };
         
-        await this.appointmentRequestApiService.update(this.item.appointmentId, updateData);
+        await this.appointmentRequestApiService.update(this.item.id, updateData);
         this.$emit('appointment-updated', updateData);
         
         // Limpiar el formulario y deshabilitar modo edición
