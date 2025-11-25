@@ -1,5 +1,6 @@
 <script>
 import {AuthenticationService} from "../services/authentication.service";
+import {ProfileApiService} from "../../shared/services/profile-api.service";
 
 export default {
   name: "sign-up",
@@ -9,27 +10,26 @@ export default {
       // Datos del Taller
       nombreTaller: '',
       ruc: '',
-      razonSocial: '',
       direccionTaller: '',
       correoTaller: '',
       telefonoTaller: '',
+      loading: false,
 
-      // Datos del Propietario / Cuenta
-      nombrePropietario: '',
+      // Datos del Propietario / Cuenta (Simplificado)
+      // nombrePropietario: '',
       password: '',
       confirmPassword: '',
       aceptarTerminos: false,
 
       authenticationService: new AuthenticationService(),
+      profileService: new ProfileApiService(),
 
       touched: {
         nombreTaller: false,
         ruc: false,
-        razonSocial: false,
         direccionTaller: false,
         correoTaller: false,
         telefonoTaller: false,
-        nombrePropietario: false,
         password: false,
         confirmPassword: false,
         aceptarTerminos: false
@@ -41,11 +41,9 @@ export default {
     isFormValid() {
       return this.nombreTaller &&
              this.ruc &&
-             this.razonSocial &&
              this.direccionTaller &&
              this.correoTaller &&
              this.telefonoTaller &&
-             this.nombrePropietario &&
              this.password &&
              this.confirmPassword &&
              this.aceptarTerminos &&
@@ -59,6 +57,8 @@ export default {
 
   methods: {
     async onSignUp() {
+      if (this.loading) return;
+      
       // Marcar todos los campos como tocados
       Object.keys(this.touched).forEach(key => {
         this.touched[key] = true;
@@ -90,41 +90,61 @@ export default {
       };
 
       try {
+        this.loading = true;
         // 1. Sign Up
         await this.authenticationService.signUp(user);
-        
-        // 2. Sign In to get token
-        const signInResponse = await this.authenticationService.signIn({ email: this.correoTaller, password: this.password });
-        const token = signInResponse.data.token;
-        const userId = signInResponse.data.id;
-        const username = signInResponse.data.username;
-        
-        // Save token for the next request
-        localStorage.setItem('token', token);
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('email', username);
 
-        // 3. Create Business Profile
-        const businessProfile = {
+        // 1.5 Auto Sign In to get token
+        const signInResponse = await this.authenticationService.signIn({
+            email: user.email,
+            password: user.password
+        });
+        
+        const token = signInResponse.data.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', signInResponse.data.id);
+        localStorage.setItem('email', signInResponse.data.username);
+
+        // 2. Create Business Profile
+        const profileData = {
           businessName: this.nombreTaller,
           ruc: this.ruc,
           businessAddress: this.direccionTaller,
           contactPhone: this.telefonoTaller,
-          contactEmail: this.correoTaller
+          contactEmail: this.correoTaller,
+          description: ''
         };
 
-        await this.authenticationService.createBusinessProfile(this.correoTaller, businessProfile);
-
-        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Registration successful', life: 3000 });
+        await this.profileService.createBusinessProfile(this.correoTaller, profileData);
         
-        // Redirect to dashboard or sign-in
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Account and Profile created successfully. Please log in.', life: 3000 });
+        
+        // Redirect to sign-in
         setTimeout(() => {
           this.$router.push({ name: 'sign-in' });
         }, 2000);
 
       } catch (error) {
         console.error(error);
-        this.$toast.add({ severity: 'error', summary: 'Error', detail: 'Registration failed: ' + (error.response?.data?.message || error.message), life: 5000 });
+        let errorMessage = 'Registration failed. Please try again.';
+        
+        if (error.response && error.response.data && error.response.data.message) {
+            if (error.response.data.message.includes('Email already exists')) {
+                errorMessage = 'This email is already registered. Please use a different email or log in.';
+            } else {
+                errorMessage = error.response.data.message;
+            }
+        } else if (error.message) {
+             if (error.message.includes('Email already exists')) {
+                errorMessage = 'This email is already registered. Please use a different email or log in.';
+            } else {
+                errorMessage = error.message;
+            }
+        }
+        
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 5000 });
+      } finally {
+        this.loading = false;
       }
     },
 
@@ -173,25 +193,24 @@ export default {
       <form @submit.prevent="onSignUp">
         <div class="p-fluid">
 
-          <!-- Sección: Información del Taller -->
+          <!-- Sección: Información de Cuenta -->
           <div class="border-round-lg p-4 mb-5" style="background-color: var(--color-card-background); border: var(--border-width) solid var(--color-border-cards); box-shadow: var(--shadow);">
             <div class="flex align-items-center gap-3 mb-4 pb-3" style="border-bottom: 1px solid var(--color-border-cards);">
               <div class="border-circle w-3rem h-3rem flex align-items-center justify-content-center" style="background-color: var(--color-primary);">
-                <i class="pi pi-building text-xl" style="color: var(--color-white);"></i>
+                <i class="pi pi-user-plus text-xl" style="color: var(--color-white);"></i>
               </div>
               <div>
-                <h3 class="font-semibold m-0" style="color: var(--color-primary);">{{
-                    $t('auth.sign_up.workshop_info.title') }}</h3>
-                <p class="text-sm m-0" style="color: var(--color-muted);">{{
-                    $t('auth.sign_up.workshop_info.subtitle') }}</p>
+                <h3 class="font-semibold m-0" style="color: var(--color-primary);">Create Account</h3>
+                <p class="text-sm m-0" style="color: var(--color-muted);">Enter your email and password to get started.</p>
               </div>
             </div>
 
-            <!-- Fila principal: Nombre + RUC + Razón Social en una sola fila -->
+            <!-- Fila principal -->
             <div class="grid mb-3">
-              <div class="col-12 lg:col-4">
+              <!-- Business Name -->
+              <div class="col-12">
                 <label for="nombreTaller" class="block font-medium mb-2" style="color: var(--color-text-gray);">
-                  <i class="pi pi-tag mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.workshop_name') }} *
+                  <i class="pi pi-briefcase mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.workshop_name') }} *
                 </label>
                 <pv-input-text
                     id="nombreTaller"
@@ -205,7 +224,9 @@ export default {
                   {{ $t('auth.sign_up.workshop_info.workshop_name_required') }}
                 </small>
               </div>
-              <div class="col-12 lg:col-4">
+
+              <!-- RUC -->
+              <div class="col-12 lg:col-6">
                 <label for="ruc" class="block font-medium mb-2" style="color: var(--color-text-gray);">
                   <i class="pi pi-id-card mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.ruc') }} *
                 </label>
@@ -215,34 +236,33 @@ export default {
                     :class="{'p-invalid': touched.ruc && !ruc}"
                     class="w-full"
                     :placeholder="$t('auth.sign_up.workshop_info.ruc_placeholder')"
-                    maxlength="11"
                     @blur="onFieldBlur('ruc')"
                 />
                 <small v-if="touched.ruc && !ruc" class="p-error block mt-1">
                   {{ $t('auth.sign_up.workshop_info.ruc_required') }}
                 </small>
               </div>
-              <div class="col-12 lg:col-4">
-                <label for="razonSocial" class="block font-medium mb-2" style="color: var(--color-text-gray);">
-                  <i class="pi pi-building-columns mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.company_name') }} *
+
+              <!-- Phone -->
+              <div class="col-12 lg:col-6">
+                <label for="telefonoTaller" class="block font-medium mb-2" style="color: var(--color-text-gray);">
+                  <i class="pi pi-phone mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.phone') }} *
                 </label>
                 <pv-input-text
-                    id="razonSocial"
-                    v-model="razonSocial"
-                    :class="{'p-invalid': touched.razonSocial && !razonSocial}"
+                    id="telefonoTaller"
+                    v-model="telefonoTaller"
+                    :class="{'p-invalid': touched.telefonoTaller && !telefonoTaller}"
                     class="w-full"
-                    :placeholder="$t('auth.sign_up.workshop_info.company_name_placeholder')"
-                    @blur="onFieldBlur('razonSocial')"
+                    :placeholder="$t('auth.sign_up.workshop_info.phone_placeholder')"
+                    @blur="onFieldBlur('telefonoTaller')"
                 />
-                <small v-if="touched.razonSocial && !razonSocial" class="p-error block mt-1">
-                  {{ $t('auth.sign_up.workshop_info.company_name_required') }}
+                <small v-if="touched.telefonoTaller && !telefonoTaller" class="p-error block mt-1">
+                  {{ $t('auth.sign_up.workshop_info.phone_required') }}
                 </small>
               </div>
-            </div>
 
-            <!-- Fila de contacto: Dirección + Email + Teléfono (proporciones equilibradas) -->
-            <div class="grid mb-0">
-              <div class="col-12 lg:col-4">
+              <!-- Address -->
+              <div class="col-12">
                 <label for="direccionTaller" class="block font-medium mb-2" style="color: var(--color-text-gray);">
                   <i class="pi pi-map-marker mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.address') }} *
                 </label>
@@ -258,7 +278,10 @@ export default {
                   {{ $t('auth.sign_up.workshop_info.address_required') }}
                 </small>
               </div>
-              <div class="col-12 lg:col-4">
+
+
+
+              <div class="col-12">
                 <label for="correoTaller" class="block font-medium mb-2" style="color: var(--color-text-gray);">
                   <i class="pi pi-envelope mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.email') }} *
                 </label>
@@ -275,56 +298,8 @@ export default {
                   {{ $t('auth.sign_up.workshop_info.email_required') }}
                 </small>
               </div>
-              <div class="col-12 lg:col-4">
-                <label for="telefonoTaller" class="block font-medium mb-2" style="color: var(--color-text-gray);">
-                  <i class="pi pi-phone mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.workshop_info.phone') }} *
-                </label>
-                <pv-input-text
-                    id="telefonoTaller"
-                    v-model="telefonoTaller"
-                    :class="{'p-invalid': touched.telefonoTaller && !telefonoTaller}"
-                    class="w-full"
-                    :placeholder="$t('auth.sign_up.workshop_info.phone_placeholder')"
-                    @blur="onFieldBlur('telefonoTaller')"
-                />
-                <small v-if="touched.telefonoTaller && !telefonoTaller" class="p-error block mt-1">
-                  {{ $t('auth.sign_up.workshop_info.phone_required') }}
-                </small>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección: Cuenta y Seguridad -->
-          <div class="border-round-lg p-4 mb-5" style="background-color: var(--color-card-background); border: var(--border-width) solid var(--color-border-cards); box-shadow: var(--shadow);">
-            <div class="flex align-items-center gap-3 mb-4 pb-3" style="border-bottom: 1px solid var(--color-border-cards);">
-              <div class="border-circle w-3rem h-3rem flex align-items-center justify-content-center" style="background-color: var(--color-primary);">
-                <i class="pi pi-user-plus text-xl" style="color: var(--color-white);"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold m-0" style="color: var(--color-primary);">{{ $t('auth.sign_up.account_security.title') }}</h3>
-                <p class="text-sm m-0" style="color: var(--color-muted);">{{ $t('auth.sign_up.account_security.subtitle') }}</p>
-              </div>
-            </div>
-
-            <!-- Fila principal: Nombre del propietario + campos adicionales -->
-            <div class="grid mb-3">
-              <div class="col-12 lg:col-4">
-                <label for="nombrePropietario" class="block font-medium mb-2" style="color: var(--color-text-gray);">
-                  <i class="pi pi-user mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.account_security.owner_name') }} *
-                </label>
-                <pv-input-text
-                    id="nombrePropietario"
-                    v-model="nombrePropietario"
-                    :class="{'p-invalid': touched.nombrePropietario && !nombrePropietario}"
-                    class="w-full"
-                    :placeholder="$t('auth.sign_up.account_security.owner_name_placeholder')"
-                    @blur="onFieldBlur('nombrePropietario')"
-                />
-                <small v-if="touched.nombrePropietario && !nombrePropietario" class="p-error block mt-1">
-                  {{ $t('auth.sign_up.account_security.owner_name_required') }}
-                </small>
-              </div>
-              <div class="col-12 lg:col-4">
+              
+              <div class="col-12 lg:col-6">
                 <label for="password" class="block font-medium mb-2" style="color: var(--color-text-gray);">
                   <i class="pi pi-lock mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.account_security.password') }} *
                 </label>
@@ -343,7 +318,7 @@ export default {
                   {{ $t('auth.sign_up.account_security.password_required') }}
                 </small>
               </div>
-              <div class="col-12 lg:col-4">
+              <div class="col-12 lg:col-6">
                 <label for="confirmPassword" class="block font-medium mb-2" style="color: var(--color-text-gray);">
                   <i class="pi pi-verified mr-2" style="color: var(--color-primary);"></i>{{ $t('auth.sign_up.account_security.confirm_password') }} *
                 </label>
@@ -366,8 +341,6 @@ export default {
                 </small>
               </div>
             </div>
-
-
 
             <!-- Fila de aceptación: Términos con diseño destacado -->
             <div class="border-round-md p-3 mt-3" style="background-color: var(--bg-info-light); border-left: 3px solid var(--color-primary);">
@@ -396,10 +369,10 @@ export default {
           <div class="mt-5">
             <pv-button
                 type="submit"
-                :label="$t('auth.sign_up.create_account_button')"
-                icon="pi pi-check-circle"
+                :label="loading ? 'Creating Account...' : $t('auth.sign_up.create_account_button')"
+                :icon="loading ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"
                 class="w-full px-6 py-3 text-lg font-semibold p-button-primary"
-                :disabled="!isFormValid"
+                :disabled="!isFormValid || loading"
                 style="background-color: var(--color-primary); border-color: var(--color-primary);"
             />
             

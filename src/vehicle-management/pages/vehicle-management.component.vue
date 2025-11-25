@@ -254,31 +254,29 @@ export default {
 
       this.vehicleApiService.getAll().then(response => {
 
-        console.log('Raw API response:', response);
-        console.log('Response data structure:', response.data);
-
-        // Check if response has the expected structure and handle different formats
-        let vehicles = [];
+        console.log('Raw API response (Appointments for Vehicles):', response);
         
-        if (response.data?.vehicles && Array.isArray(response.data.vehicles)) {
-          // Expected structure: { vehicles: [...] }
-          vehicles = response.data.vehicles;
-        } else if (Array.isArray(response.data)) {
-          // Alternative structure: [...]
-          vehicles = response.data;
-        } else {
-          console.error('Unexpected API response structure:', response.data);
-          this.itemsArray = [];
-          this.$toast.add({
-            severity: 'warn',
-            summary: this.$t('vehicle_management.errors.data_format_issue_title'),
-            detail: this.$t('vehicle_management.errors.unexpected_data_format'),
-            life: 5000
-          });
-          return;
+        // Extract unique vehicles from appointments
+        const appointments = response.data;
+        const vehiclesMap = new Map();
+
+        if (Array.isArray(appointments)) {
+            appointments.forEach(app => {
+                if (app.vehicle && !vehiclesMap.has(app.vehicle.vehicleId || app.vehicle.licensePlate)) {
+                    // Enrich vehicle data with appointment info if needed (e.g. owner from app)
+                    const vehicleData = {
+                        ...app.vehicle,
+                        owner: app.customer, // Map customer as owner
+                        // Derive status from appointment if vehicle status is missing
+                        vehicleStatus: app.status === 'IN_PROGRESS' ? 'in-service' : 'active'
+                    };
+                    vehiclesMap.set(app.vehicle.vehicleId || app.vehicle.licensePlate, vehicleData);
+                }
+            });
         }
 
-        console.log('Vehicles array:', vehicles);
+        const vehicles = Array.from(vehiclesMap.values());
+        console.log('Extracted unique vehicles:', vehicles);
 
         // Map API data to expected table structure
         this.itemsArray = vehicles.map(item => {
@@ -289,7 +287,7 @@ export default {
           return {
             ...vehicle,
             // ID for unique identification
-            id: item.vehicleId || item.id,
+            id: item.vehicleId || item.id || item.licensePlate,
 
             // Flattened vehicle fields for the table
             licensePlate: item.licensePlate || this.$t('vehicle_management.messages.na'),
@@ -309,7 +307,7 @@ export default {
             lastUpdate: item.telemetry?.lastUpdate || null,
 
             // Maintenance data for the table
-            vehicleStatus: item.maintenance?.vehicleStatus || 'active',
+            vehicleStatus: item.vehicleStatus || 'active',
             nextServiceDate: item.maintenance?.nextServiceDate || null,
             lastServiceDate: item.maintenance?.lastServiceDate || null,
 

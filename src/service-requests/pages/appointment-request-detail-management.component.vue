@@ -6,6 +6,8 @@ import {AppointmentRequestApiService} from "../services/appointment-request-api.
 import {MechanicApiService} from "../../workshop/services/mechanic-api.service.js";
 import {ProfileApiService} from "../../shared/services/profile-api.service.js";
 import {AppointmentRequest} from "../models/appointment-request.entity.js";
+import http from "../../shared/services/http-common";
+
 
 export default {
   name: 'appointment-request-detail-management',
@@ -41,11 +43,11 @@ export default {
     statusOptions() {
       return [
         { label: this.$t('appointment_detail.status.all'), value: null },
-        { label: this.$t('appointment_detail.status.pending'), value: 'PENDIENTE' },
-        { label: this.$t('appointment_detail.status.confirmed'), value: 'CONFIRMADA' },
-        { label: this.$t('appointment_detail.status.in_progress'), value: 'EN_PROCESO' },
-        { label: this.$t('appointment_detail.status.completed'), value: 'COMPLETADA' },
-        { label: this.$t('appointment_detail.status.cancelled'), value: 'CANCELADA' }
+        { label: this.$t('appointment_detail.status.pending'), value: 'PENDING' },
+        { label: this.$t('appointment_detail.status.confirmed'), value: 'CONFIRMED' },
+        { label: this.$t('appointment_detail.status.in_progress'), value: 'IN_PROGRESS' },
+        { label: this.$t('appointment_detail.status.completed'), value: 'COMPLETED' },
+        { label: this.$t('appointment_detail.status.cancelled'), value: 'CANCELLED' }
       ];
     },
 
@@ -106,7 +108,7 @@ export default {
       }
     },
 
-    getAppointmentDetailsById(appointmentId) {
+    async getAppointmentDetailsById(appointmentId) {
       // Lógica para obtener detalles de la cita por ID
       console.log(`Obtener detalles de la cita con ID: `, appointmentId);
       
@@ -117,30 +119,60 @@ export default {
       // Simular progreso de carga
       this.simulateLoadingProgress();
       
-      this.appointmentRequestApiService.getAll().then(response => {
+      try {
+        // Obtener directamente usando getById en lugar de filtrar getAll
+        const response = await this.appointmentRequestApiService.getById(parseInt(appointmentId));
+        
+        console.log('Appointment response:', response.data);
+        
+        const appointmentData = response.data;
+        
+        if (!appointmentData) {
+          throw new Error('Appointment not found');
+        }
 
+        // Enriquecer con datos de vehicle y driver
+        let enrichedData = { ...appointmentData };
 
-        // Filtrar el response para asignar el item correcto
-        const appointmentData = response.data.find(app => app.appointmentId === appointmentId);
+        // Obtener datos del vehículo
+        if (appointmentData.vehicleId) {
+          try {
+            const vehicleResponse = await http.get(`/vehicles/${appointmentData.vehicleId}`);
+            enrichedData.vehicle = vehicleResponse.data;
+          } catch (error) {
+            console.warn('Could not fetch vehicle:', error);
+            enrichedData.vehicle = null;
+          }
+        }
 
-        this.item = appointmentData ? new AppointmentRequest(appointmentData) : null;
-          
-          // Completar todos los pasos
-          this.loadingStep = this.loadingSteps.length;
-          
-          // Mostrar mensaje de éxito después de un breve delay
-          setTimeout(() => {
-            this.isLoading = false;
-            console.log('Detalles de la cita obtenidos:', this.item);
-          }, 300);
-        })
-        .catch(error => {
-          console.error('Error al obtener detalles de la cita:', error);
+        // Obtener datos del driver (person profile)
+        if (appointmentData.driverId) {
+          try {
+            const profileResponse = await http.get(`/person-profiles/${appointmentData.driverId}`);
+            enrichedData.driver = profileResponse.data;
+          } catch (error) {
+            console.warn('Could not fetch driver profile:', error);
+            enrichedData.driver = null;
+          }
+        }
+
+        this.item = new AppointmentRequest(enrichedData);
+        
+        // Completar todos los pasos
+        this.loadingStep = this.loadingSteps.length;
+        
+        // Mostrar mensaje de éxito después de un breve delay
+        setTimeout(() => {
           this.isLoading = false;
-          this.hasError = true;
-          this.errorMessage = this.$t('appointment_detail.error.load_details');
-        });
+          console.log('Detalles de la cita obtenidos:', this.item);
+        }, 300);
 
+      } catch (error) {
+        console.error('Error al obtener detalles de la cita:', error);
+        this.isLoading = false;
+        this.hasError = true;
+        this.errorMessage = this.$t('appointment_detail.error.load_details');
+      }
     },
 
     simulateLoadingProgress() {
@@ -234,7 +266,7 @@ export default {
 
   created() {
     // Obtener ID de la cita desde la ruta
-    const appointmentId = this.$route.query.id;
+    const appointmentId = parseInt(this.$route.query.id);
     
     console.log(`Cargar detalles de la cita con ID: ${appointmentId}`);
 
@@ -242,7 +274,7 @@ export default {
     this.appointmentRequestApiService = new AppointmentRequestApiService();
     this.mechanicApiService = new MechanicApiService();
 
-    if (appointmentId) {
+    if (appointmentId && !isNaN(appointmentId)) {
       this.getAppointmentDetailsById(appointmentId);
     } else {
       this.hasError = true;

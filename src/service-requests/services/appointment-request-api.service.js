@@ -7,22 +7,39 @@ export class AppointmentRequestApiService {
     }
 
     async getWorkshopId() {
-        // Try to get from localStorage first
-        let workshopId = localStorage.getItem('workshopId');
+        // Get current user email to make workshopId user-specific
+        const userEmail = localStorage.getItem('userEmail') || localStorage.getItem('email');
+
+        if (!userEmail) {
+            console.error("No user email found in localStorage");
+            throw new Error("User not authenticated");
+        }
+
+        // Create a user-specific key for workshopId
+        const workshopIdKey = `workshopId_${userEmail}`;
+
+        // Try to get from localStorage first (user-specific)
+        let workshopId = localStorage.getItem(workshopIdKey);
 
         if (!workshopId) {
             // If not found, fetch from API
             try {
-                const response = await this.mechanicApiService.getWorkshopByBusinessProfile();
-                if (response.data && response.data.id) {
-                    workshopId = response.data.id;
-                    localStorage.setItem('workshopId', workshopId);
+                // Use the helper method from MechanicApiService that handles the full flow
+                workshopId = await this.mechanicApiService.getCurrentWorkshopId();
+
+                if (workshopId) {
+                    // Store with user-specific key
+                    localStorage.setItem(workshopIdKey, workshopId);
+                    console.log(`Workshop ID ${workshopId} cached for user ${userEmail}`);
                 }
             } catch (error) {
                 console.error("Failed to fetch workshop ID", error);
                 throw error;
             }
+        } else {
+            console.log(`Using cached workshop ID ${workshopId} for user ${userEmail}`);
         }
+
         return workshopId;
     }
 

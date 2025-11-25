@@ -3,6 +3,8 @@
 import DataManager from "../../shared/components/data-manager.component.vue";
 import {AppointmentRequest, Customer, Vehicle, AppointmentRequestDetails} from "../models/appointment-request.entity.js";
 import {AppointmentRequestApiService} from "@/service-requests/services/appointment-request-api.service.js";
+import http from "../../shared/services/http-common";
+
 
 export default {
   name: 'services-request-management',
@@ -21,6 +23,16 @@ export default {
       selectedStatus: null, // Estado seleccionado en el filtro
 
       loading: false,
+
+      // Dialog State
+      showManageDialog: false,
+      manageDialogLoading: false,
+      selectedAppointment: null,
+      availableMechanics: [],
+      
+      // Form State
+      formStatus: null,
+      formMechanicId: null,
 
     }
   },
@@ -41,11 +53,11 @@ export default {
     statusOptions() {
       return [
         { label: this.$t('service_requests.status.all'), value: null },
-        { label: this.$t('service_requests.status.pending'), value: 'PENDIENTE' },
-        { label: this.$t('service_requests.status.confirmed'), value: 'CONFIRMADA' },
-        { label: this.$t('service_requests.status.in_progress'), value: 'EN_PROCESO' },
-        { label: this.$t('service_requests.status.completed'), value: 'COMPLETADA' },
-        { label: this.$t('service_requests.status.cancelled'), value: 'CANCELADA' },
+        { label: this.$t('service_requests.status.pending'), value: 'PENDING' },
+        { label: this.$t('service_requests.status.confirmed'), value: 'CONFIRMED' },
+        { label: this.$t('service_requests.status.in_progress'), value: 'IN_PROGRESS' },
+        { label: this.$t('service_requests.status.completed'), value: 'COMPLETED' },
+        { label: this.$t('service_requests.status.cancelled'), value: 'CANCELLED' },
       ];
     },
 
@@ -122,15 +134,93 @@ export default {
 
     onEditItem(item) {
       console.log('Editar solicitud:', item);
-      // Implementar navegación a formulario de edición
+      this.openManageDialog(item);
+    },
+
+    async openManageDialog(item) {
+        this.selectedAppointment = item;
+        this.formStatus = item.status;
+        this.formMechanicId = item.assignedMechanic ? item.assignedMechanic.mechanicId : null;
+        this.showManageDialog = true;
+        this.manageDialogLoading = true;
+
+        try {
+            const response = await this.appointmentRequestApiService.getAvailableMechanics();
+            // Map mechanics to a format friendly for dropdown (e.g. including name)
+            // Assuming response.data is an array of mechanics
+            this.availableMechanics = response.data.map(m => ({
+                label: `${m.fullName} (${m.specialization || 'General'})`,
+                value: m.id // or mechanicId depending on API response
+            }));
+            
+            // If the mechanic ID is not in the list (maybe fetching mechanics failed or structure is diff), handle gracefully
+            console.log("Available mechanics:", this.availableMechanics);
+
+        } catch (error) {
+            console.error("Error fetching mechanics:", error);
+            this.$toast.add({severity: 'error', summary: 'Error', detail: 'Could not load mechanics', life: 3000});
+        } finally {
+            this.manageDialogLoading = false;
+        }
+    },
+
+    closeManageDialog() {
+        this.showManageDialog = false;
+        this.selectedAppointment = null;
+        this.availableMechanics = [];
+        this.formStatus = null;
+        this.formMechanicId = null;
+    },
+
+    async saveManagementChanges() {
+        if (!this.selectedAppointment) return;
+
+        this.manageDialogLoading = true;
+        const appointmentId = this.selectedAppointment.id;
+        let successCount = 0;
+        let errorCount = 0;
+
+        try {
+            // 1. Update Status if changed
+            if (this.formStatus && this.formStatus !== this.selectedAppointment.status) {
+                await this.appointmentRequestApiService.updateStatus(appointmentId, this.formStatus);
+                successCount++;
+            }
+
+            // 2. Assign Mechanic if changed (and selected)
+            // Note: If null, we might want to unassign, but API might only support assign or unassign specific.
+            // For now, let's assume we only assign if a mechanic is selected.
+            // The unassign logic would require a separate check or API support.
+            const currentMechanicId = this.selectedAppointment.assignedMechanic ? this.selectedAppointment.assignedMechanic.mechanicId : null;
+            
+            if (this.formMechanicId && this.formMechanicId !== currentMechanicId) {
+                await this.appointmentRequestApiService.assignMechanic(appointmentId, this.formMechanicId);
+                successCount++;
+            }
+
+            if (successCount > 0) {
+                this.$toast.add({severity: 'success', summary: 'Success', detail: 'Appointment updated successfully', life: 3000});
+                this.closeManageDialog();
+                this.getAll(); // Refresh list
+            } else if (errorCount === 0) {
+                this.closeManageDialog(); // No changes made
+            }
+
+        } catch (error) {
+            console.error("Error updating appointment:", error);
+            this.$toast.add({severity: 'error', summary: 'Error', detail: 'Failed to update appointment', life: 3000});
+        } finally {
+            this.manageDialogLoading = false;
+        }
     },
 
     onViewItem(item) {
       console.log('Ver detalles de solicitud:', item);
+      console.log('Cargar detalles de la cita con ID:', item.id);
       // Navegar a vista de detalles pasando el ID de la solicitud
       this.$router.push({ 
         name: 'appointment-request-details',
-        query: { id: item.appointmentId }
+        query: { id: item.id }
       });
     },
 
@@ -154,15 +244,15 @@ export default {
 
     getStatusSeverity(status) {
       switch (status) {
-        case 'CONFIRMADA':
+        case 'CONFIRMED':
           return 'success';
-        case 'EN_PROCESO':
+        case 'IN_PROGRESS':
           return 'info';
-        case 'COMPLETADA':
+        case 'COMPLETED':
           return 'success';
-        case 'PENDIENTE':
+        case 'PENDING':
           return 'warn';
-        case 'CANCELADA':
+        case 'CANCELLED':
           return 'danger';
         default:
           return 'info';
@@ -308,58 +398,135 @@ export default {
 
 
 
-    getAll() {
+    async getAll() {
       this.loading = true;
       
-      this.appointmentRequestApiService.getAll().then(response => {
-
+      try {
+        const response = await this.appointmentRequestApiService.getAll();
         console.log('Raw API response:', response);
 
-        // Mapear los datos de la API a la estructura esperada por la tabla
-        this.itemsArray = response.data.map(item => {
-          // Crear el objeto AppointmentRequest desde los datos de la API
-          const request = new AppointmentRequest(item);
-          
-          // Agregar propiedades calculadas y aplanadas para la tabla
-          return {
-            ...request,
-            // ID para identificación única
-            id: item.appointmentId || item.id,
-            
-            // Campos aplanados del cliente para la tabla
-            customerName: this.getCustomerFullName(item.customer),
-            customerPhone: item.customer?.phoneNumber || 'N/A',
-            customerEmail: item.customer?.email || 'N/A',
-            
-            // Campos aplanados del vehículo para la tabla
-            vehiclePlate: item.vehicle?.licensePlate || 'N/A',
-            vehicleBrand: this.getVehicleBrandModel(item.vehicle),
-            
-            // Campos aplanados de la cita para la tabla
-            appointmentDate: item.appointmentRequest?.scheduledDate || '',
-            appointmentTime: item.appointmentRequest?.startTime || '',
-            serviceReason: item.appointmentRequest?.requestedService || 'Servicio general',
-            
-            // Estado directamente del item
-            status: item.status || 'PENDIENTE',
-            
-            // Fecha normalizada para filtros
-            appointmentDateNormalized: this.normalizeDateForComparison(item.appointmentRequest?.scheduledDate),
-            
-            // Mantener referencia al objeto completo para operaciones detalladas
-            fullData: item
-          };
-        });
+        // Enriquecer los datos obteniendo información de vehicle y driver profile
+        const enrichedAppointments = await Promise.all(
+          response.data.map(async (item) => {
+            try {
+              // Crear el objeto base
+              const request = new AppointmentRequest(item);
+              
+              // Enriquecer con datos de vehículo
+              let vehicleData = {
+                licensePlate: 'N/A',
+                brand: 'N/A',
+                model: 'N/A'
+              };
+              
+              if (item.vehicleId) {
+                try {
+                  const vehicleResponse = await http.get(`/vehicles/${item.vehicleId}`);
+                  if (vehicleResponse && vehicleResponse.data) {
+                    vehicleData = {
+                      licensePlate: vehicleResponse.data.licensePlate || 'N/A',
+                      brand: vehicleResponse.data.brand || 'N/A',
+                      model: vehicleResponse.data.model || 'N/A'
+                    };
+                  }
+                } catch (error) {
+                  console.warn(`Could not fetch vehicle ${item.vehicleId}:`, error.message);
+                }
+              }
 
-        console.log('Mapped items for table:', this.itemsArray);
+              // Enriquecer con datos del  driver (person profile)
+              let driverData = {
+                fullName: 'N/A',
+                phone: 'N/A',
+                email: 'N/A'
+              };
+              
+              if (item.driverId) {
+                try {
+                  // El driverId es el profileId en person-profiles
+                  const profileResponse = await http.get(`/person-profiles/${item.driverId}`);
+                  if (profileResponse && profileResponse.data) {
+                    driverData = {
+                      fullName: profileResponse.data.fullName || 'N/A',
+                      phone: profileResponse.data.phone || 'N/A',
+                      email: profileResponse.data.email || 'N/A'
+                    };
+                  }
+                } catch (error) {
+                  console.warn(`Could not fetch driver profile ${item.driverId}:`, error.message);
+                }
+              }
 
-      }).catch(error => {
-        this.itemsArray = []; // Limpiar datos en caso de error
+              // Retornar el objeto enriquecido
+              return {
+                ...request,
+                id: item.id,
+                
+                // Datos del cliente (driver)
+                customerName: driverData.fullName,
+                customerPhone: driverData.phone,
+                customerEmail: driverData.email,
+                
+                // Datos del vehículo
+                vehiclePlate: vehicleData.licensePlate,
+                vehicleBrand: `${vehicleData.brand} ${vehicleData.model}`.trim() || 'N/A',
+                
+                // Datos de la cita
+                appointmentDate: item.startAt ? item.startAt.split('T')[0] : '',
+                appointmentTime: item.startAt ? item.startAt.split('T')[1]?.substring(0, 5) || '' : '',
+                serviceReason: item.serviceType === 'CUSTOM' 
+                  ? (item.customServiceDescription || 'Servicio personalizado')
+                  : item.serviceType || 'Servicio general',
+                
+                // Estado
+                status: item.status || 'PENDING',
+                
+                // Fecha normalizada para filtros
+                appointmentDateNormalized: item.startAt ? item.startAt.split('T')[0] : null,
+                
+                // Mantener referencia al objeto completo
+                fullData: item
+              };
+            } catch (error) {
+              console.error('Error enriching appointment:', error);
+              // Retornar datos mínimos si falla el enriquecimiento
+              return {
+                id: item.id,
+                customerName: 'N/A',
+                customerPhone: 'N/A',
+                customerEmail: 'N/A',
+                vehiclePlate: 'N/A',
+                vehicleBrand: 'N/A',
+                appointmentDate: item.startAt ? item.startAt.split('T')[0] : '',
+                serviceReason: 'N/A',
+                status: item.status || 'PENDING',
+                fullData: item
+              };
+            }
+          })
+        );
+
+        this.itemsArray = enrichedAppointments;
+        console.log('Enriched items for table:', this.itemsArray);
+
+      } catch (error) {
+        this.itemsArray = [];
         this.handleServerError(error, 'las solicitudes de servicio');
-      }).finally(() => {
+      } finally {
         this.loading = false;
-      });
-    }
+      }
+    },
+
+    async onStatusChange(item) {
+        try {
+            await this.appointmentRequestApiService.updateStatus(item.id, item.status);
+            this.$toast.add({severity: 'success', summary: 'Success', detail: 'Status updated successfully', life: 3000});
+        } catch (error) {
+            console.error("Error updating status:", error);
+            this.$toast.add({severity: 'error', summary: 'Error', detail: 'Failed to update status', life: 3000});
+            this.getAll(); // Revert/Refresh on error
+        }
+    },
 
   },
 
@@ -445,10 +612,15 @@ export default {
 
       <!-- Template para el campo "status" -->
       <template #status="{ data }">
-        <pv-tag
-            :value="data.status"
-            :severity="getStatusSeverity(data.status)"
-            class="text-sm"
+        <pv-dropdown
+            v-model="data.status"
+            :options="statusOptions.filter(o => o.value !== null)"
+            option-label="label"
+            option-value="value"
+            placeholder="Select Status"
+            class="w-full p-inputtext-sm"
+            @change="onStatusChange(data)"
+            :class="{'p-disabled': loading}"
         />
       </template>
 
@@ -458,6 +630,44 @@ export default {
       </template>
 
     </data-manager>
+
+    <pv-dialog v-model:visible="showManageDialog" :style="{width: '450px'}" header="Manage Appointment" :modal="true" class="p-fluid">
+      <div v-if="selectedAppointment">
+          
+          <div class="field mb-4">
+              <label for="status" class="font-bold block mb-2">{{ $t('service_requests.columns.status') }}</label>
+              <pv-dropdown 
+                  id="status" 
+                  v-model="formStatus" 
+                  :options="statusOptions.filter(o => o.value !== null)" 
+                  option-label="label" 
+                  option-value="value" 
+                  placeholder="Select a Status" 
+                  class="w-full"
+              />
+          </div>
+
+          <div class="field mb-4">
+              <label for="mechanic" class="font-bold block mb-2">Assign Mechanic</label>
+              <pv-dropdown 
+                  id="mechanic" 
+                  v-model="formMechanicId" 
+                  :options="availableMechanics" 
+                  option-label="label" 
+                  option-value="value" 
+                  placeholder="Select a Mechanic" 
+                  class="w-full"
+                  :loading="manageDialogLoading"
+                  empty-message="No mechanics available"
+              />
+          </div>
+
+      </div>
+      <template #footer>
+        <pv-button label="Cancel" icon="pi pi-times" class="p-button-text" @click="closeManageDialog"/>
+        <pv-button label="Save" icon="pi pi-check" class="p-button-text" @click="saveManagementChanges" :loading="manageDialogLoading" />
+      </template>
+    </pv-dialog>
 
   </div>
 

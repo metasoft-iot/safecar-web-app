@@ -26,7 +26,11 @@ export class VehicleApiService {
 
     async getAll() {
         const workshopId = await this.getWorkshopId();
-        return http.get(`/workshops/${workshopId}/vehicles`);
+        // We should fetch appointments and extract vehicles from them since there is no direct "workshop vehicles" endpoint yet
+        // or if the user requested specifically to see vehicles from appointments.
+        // However, let's check if the backend supports /workshops/{id}/vehicles. 
+        // Based on project analysis, it seems we need to derive it from appointments for now.
+        return http.get(`/workshops/${workshopId}/appointments`);
     }
 
 }

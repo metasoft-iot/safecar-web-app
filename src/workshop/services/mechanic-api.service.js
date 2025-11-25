@@ -3,15 +3,35 @@ import http from "../../shared/services/http-common";
 export class MechanicApiService {
 
     getAllByWorkshopId(workshopId) {
-        return http.get(`/workshops/${workshopId}/mechanics`);
+        return http.get(`/mechanics/workshop/${workshopId}`);
     }
 
     getWorkshopByBusinessProfileId(businessProfileId) {
         return http.get(`/workshops/by-business-profile/${businessProfileId}`);
     }
 
+    getWorkshopById(workshopId) {
+        return http.get(`/workshops/${workshopId}`);
+    }
+
     getBusinessProfileByEmail(email) {
         return http.get(`/business-profiles?email=${email}`);
+    }
+
+    getMechanicByProfileId(profileId) {
+        return http.get(`/mechanics/profile/${profileId}`);
+    }
+
+    updateWorkshop(workshopId, data) {
+        return http.patch(`/workshops/${workshopId}`, data);
+    }
+
+    assignToWorkshop(mechanicId, workshopId) {
+        return http.patch(`/mechanics/${mechanicId}/workshop`, { workshopId });
+    }
+
+    updateMechanic(mechanicId, data) {
+        return http.patch(`/mechanics/${mechanicId}`, data);
     }
 
     // Helper to get the current workshop ID based on logged in user

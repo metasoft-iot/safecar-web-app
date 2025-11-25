@@ -12,6 +12,7 @@ import DashboardManagementComponent from "@/dashboard/pages/dashboard-management
 import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-management.component.vue";
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
 import MechanicManagementComponent from "@/workshop/pages/mechanic-management.component.vue";
+import WorkshopProfileComponent from "@/workshop/pages/workshop-profile.component.vue";
 
 
 
@@ -105,6 +106,15 @@ const router = createRouter({
                     name: 'mechanic-management',
                     component: MechanicManagementComponent,
                     meta: { title: 'Gestión de Mecánicos' }
+                },
+                // =========================================================================
+
+                // =================== Rutas para el perfil del taller =====================
+                {
+                    path: 'mechanic/profile',
+                    name: 'workshop-profile',
+                    component: WorkshopProfileComponent,
+                    meta: { title: 'Perfil del Taller' }
                 },
                 // =========================================================================
 
