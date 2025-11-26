@@ -17,6 +17,7 @@ export default {
       
       // Datos del Taller
       nombreTaller: '',
+      username: '',
       ruc: '',
       direccionTaller: '',
       correoTaller: '',
@@ -37,6 +38,7 @@ export default {
 
       touched: {
         nombreTaller: false,
+        username: false,
         ruc: false,
         direccionTaller: false,
         correoTaller: false,
@@ -51,6 +53,7 @@ export default {
   computed: {
     isFormValid() {
       return this.nombreTaller &&
+             this.username &&
              this.ruc &&
              this.direccionTaller &&
              this.correoTaller &&
@@ -134,6 +137,7 @@ export default {
       // Store registration data in sessionStorage for after payment
       sessionStorage.setItem('pendingRegistration', JSON.stringify({
         nombreTaller: this.nombreTaller,
+        username: this.username,
         ruc: this.ruc,
         direccionTaller: this.direccionTaller,
         correoTaller: this.correoTaller,
@@ -181,6 +185,7 @@ export default {
 
         // 3. Create Business Profile
         const profileData = {
+          username: this.username,
           businessName: this.nombreTaller,
           ruc: this.ruc,
           businessAddress: this.direccionTaller,
@@ -315,6 +320,27 @@ export default {
                   />
                   <small v-if="touched.nombreTaller && !nombreTaller" class="p-error block mt-1">
                     Workshop name is required
+                  </small>
+                </div>
+
+                <!-- Username / Nickname -->
+                <div class="col-12">
+                  <label for="username" class="block font-medium mb-2" style="color: var(--color-text-gray);">
+                    <i class="pi pi-user mr-2" style="color: var(--color-primary);"></i>Your Username / Nickname *
+                  </label>
+                  <pv-input-text
+                      id="username"
+                      v-model="username"
+                      :class="{'p-invalid': touched.username && !username}"
+                      class="w-full"
+                      placeholder="e.g., JohnDoe, CarlosTech, etc."
+                      @blur="onFieldBlur('username')"
+                  />
+                  <small v-if="touched.username && !username" class="p-error block mt-1">
+                    Username is required
+                  </small>
+                  <small class="block mt-1" style="color: var(--color-muted);">
+                    <i class="pi pi-info-circle mr-1"></i>This is your personal username, different from the workshop name
                   </small>
                 </div>
 

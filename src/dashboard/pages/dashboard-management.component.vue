@@ -10,6 +10,7 @@ export default {
     return {
       loading: true,
       workshop: null,
+      businessProfile: null,
       mechanics: [],
       appointments: [],
       
@@ -29,6 +30,25 @@ export default {
     async loadDashboardData() {
       this.loading = true;
       try {
+        // Get user email from localStorage (saved as 'email' during login)
+        const userEmail = localStorage.getItem('email');
+        console.log('🔍 Dashboard - User email from localStorage:', userEmail);
+        
+        // 0. Fetch Business Profile (to get username)
+        if (userEmail) {
+          try {
+            console.log('📡 Fetching business profile for:', userEmail);
+            const profileResponse = await http.get(`/business-profiles?email=${userEmail}`);
+            this.businessProfile = profileResponse.data;
+            console.log('✅ Business Profile loaded:', this.businessProfile);
+            console.log('👤 Username:', this.businessProfile?.username);
+          } catch (error) {
+            console.error('❌ Could not fetch business profile:', error);
+          }
+        } else {
+          console.warn('⚠️ No userEmail found in localStorage');
+        }
+        
         const workshopId = await this.mechanicService.getCurrentWorkshopId();
         
         // 1. Fetch Workshop Details
@@ -131,7 +151,10 @@ export default {
     
     <div class="col-12 mb-4">
         <h1 class="text-3xl font-bold text-900">Executive Dashboard</h1>
-        <p class="text-600">Welcome back to your workshop overview.</p>
+        <p class="text-600 text-xl mt-2">
+          Welcome back<template v-if="businessProfile && businessProfile.username">, 
+            <span class="username-highlight">{{ businessProfile.username }}</span></template> to your workshop overview.
+        </p>
     </div>
 
     <div v-if="loading" class="col-12 flex justify-content-center">
@@ -147,10 +170,13 @@ export default {
                     <i class="pi pi-building text-blue-500 text-2xl"></i>
                 </div>
                 <div v-if="workshop">
+                    <div class="mb-2" v-if="businessProfile && businessProfile.username">
+                        <span class="font-semibold">Owner:</span> {{ businessProfile.username }}
+                    </div>
                     <div class="mb-2"><span class="font-semibold">Name:</span> {{ workshop.name || 'My Workshop' }}</div>
                     <!-- Backend might separate these or they might be in different fields, adjusting based on typical response -->
                     <div class="mb-2"><span class="font-semibold">Address:</span> {{ workshop.address || workshop.location || 'N/A' }}</div>
-                    <div class="mb-2"><span class="font-semibold">Description:</span> {{ workshop.workshopDescription || 'No description available' }}</div>
+                    <div class="mb-2"><span class="font-semibold">Description:</span> {{ workshop.workshopDescription || businessProfile?.description || 'No description available' }}</div>
                     <div><span class="font-semibold">Mechanics:</span> {{ totalMechanics }}</div>
                 </div>
                 <div v-else class="text-gray-500">Workshop details not available.</div>
@@ -262,5 +288,16 @@ export default {
 <style scoped>
 .card {
     background: var(--surface-card);
+}
+
+.username-highlight {
+    font-weight: 700;
+    font-size: 1.25rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+    padding: 0 4px;
 }
 </style>
