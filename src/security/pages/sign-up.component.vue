@@ -1,20 +1,19 @@
 <script>
 import {AuthenticationService} from "../services/authentication.service";
 import {ProfileApiService} from "../../shared/services/profile-api.service";
-import PlanSelection from "../../payments/components/plan-selection.component.vue";
+//import PlanSelection from "../../payments/components/plan-selection.component.vue";
 
 
 export default {
   name: "sign-up",
   components: {
-    PlanSelection
   },
 
   data() {
     return {
-      // Step tracking
+      // Step tracking (simplified - no plan selection)
       currentStep: 1,
-      totalSteps: 3,
+      totalSteps: 1,
       
       // Datos del Taller
       nombreTaller: '',
@@ -118,8 +117,8 @@ export default {
         return;
       }
 
-      // Move to plan selection
-      this.nextStep();
+      // Complete registration directly (no plan selection step)
+      await this.completeRegistration();
     },
     
     // Step 2: Handle plan selection
@@ -209,7 +208,7 @@ export default {
         
         // Redirect to dashboard
         setTimeout(() => {
-          this.$router.push({ name: 'sign-in' });
+          this.$router.push({ name: 'mechanic-dashboard' });
         }, 2000);
 
       } catch (error) {
@@ -282,32 +281,6 @@ export default {
       <div style="width: 2.5rem;"></div>
     </div>
 
-    <!-- Progress Steps Indicator -->
-    <div class="max-w-6xl mx-auto px-4 py-5">
-      <div class="flex justify-content-between align-items-center">
-        <!-- Step 1 -->
-        <div class="flex-1 flex flex-column align-items-center">
-          <div :class="['step-indicator', currentStep >= 1 ? 'active' : '']">
-            <i class="pi pi-building"></i>
-          </div>
-          <span class="text-sm mt-2 font-medium">Workshop Info</span>
-        </div>
-        
-        <!-- Connector -->
-        <div class="flex-1" style="height: 2px; margin: 0 1rem; margin-bottom: 1.5rem;" 
-             :style="`background-color: ${currentStep >= 2 ? 'var(--color-primary)' : '#e2e8f0'}`"></div>
-        
-        <!-- Step 2 -->
-        <div class="flex-1 flex flex-column align-items-center">
-          <div :class="['step-indicator', currentStep >= 2 ? 'active' : '']">
-            <i class="pi pi-credit-card"></i>
-          </div>
-          <span class="text-sm mt-2 font-medium">Choose Plan</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step Content -->
     <div class="p-4 pb-6 md:px-6 lg:px-8 xl:px-12 max-w-6xl mx-auto">
       
       <!-- Step 1: Workshop Information Form -->
@@ -491,7 +464,7 @@ export default {
             <div class="mt-5">
               <pv-button
                   type="submit"
-                  :label="loading ? 'Validating...' : 'Continue to Plan Selection'"
+                  :label="loading ? 'Processing...' : 'Complete Registration'"
                   :icon="loading ? 'pi pi-spin pi-spinner' : 'pi pi-arrow-right'"
                   icon-pos="right"
                   class="w-full px-6 py-3 text-lg font-semibold p-button-primary"
@@ -501,7 +474,7 @@ export default {
               
               <div class="flex align-items-center justify-content-center gap-2 mt-3" v-if="isFormValid">
                 <i class="pi pi-check-circle text-sm" style="color: var(--color-success);"></i>
-                <span class="text-sm font-medium" style="color: var(--color-success);">Form complete - Ready to continue</span>
+                <span class="text-sm font-medium" style="color: var(--color-success);">Form complete - Ready to register</span>
               </div>
               <div class="flex align-items-center justify-content-center gap-2 mt-3" v-else>
                 <i class="pi pi-info-circle text-sm" style="color: var(--color-warning);"></i>
@@ -512,13 +485,7 @@ export default {
         </form>
       </div>
       
-      <!-- Step 2: Plan Selection -->
-      <div v-if="currentStep === 2">
-        <plan-selection
-          @plan-selected="onPlanSelected"
-          @checkout-session-created="onCheckoutSessionCreated"
-        />
-      </div>
+
     </div>
   </div>
 </template>

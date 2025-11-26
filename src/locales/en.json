@@ -129,7 +129,7 @@
     "title": "Vehicle Service History",
     "subtitle": "Complete record of maintenance and repairs performed on vehicles",
     "title_singular": "service history",
-    "title_plural": "service histories", 
+    "title_plural": "service histories",
     "new_history": "New History",
     "delete": "Delete",
     "export": "Export",
@@ -261,7 +261,6 @@
     },
     "loading": "Loading vehicles...",
     "no_vehicles": "No vehicles found",
-
     "actions": {
       "add_vehicle": "Add Vehicle",
       "delete": "Delete",
@@ -582,5 +581,17 @@
     "network_error": "Could not connect to server to load {context}. Please check your internet connection.",
     "data_format_error": "Server data format error: {message}",
     "invalid_format": "Invalid {context} format from server"
+  },
+  "subscription": {
+    "title": "Start Your Subscription",
+    "description": "Subscribe to a SafeCar plan to access advanced features and tools for your workshop",
+    "select_plan": "Select a Plan",
+    "selected_plan": "Selected Plan",
+    "payment_method": "Payment Method",
+    "success_title": "Subscription Successful",
+    "success_message": "Successfully subscribed to {0}.",
+    "plan_popular_label": "Most Popular",
+    "price_per_month": "per month",
+    "Selected": "Selected"
   }
 }

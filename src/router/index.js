@@ -15,7 +15,7 @@ import VehicleManagementComponent from "@/vehicle-management/pages/vehicle-manag
 import VehicleDetailManagementComponent from "@/vehicle-management/pages/vehicle-detail-management.component.vue";
 import MechanicManagementComponent from "@/workshop/pages/mechanic-management.component.vue";
 import WorkshopProfileComponent from "@/workshop/pages/workshop-profile.component.vue";
-
+import SubscriptionManagementComponent from "@/subscriptions/pages/subscription-management.component.vue";
 
 
 const router = createRouter({
@@ -133,7 +133,14 @@ const router = createRouter({
                 },
                 // =========================================================================
 
-
+                // =================== Rutas para las suscripciones =======================
+                {
+                    path: 'mechanic/subscriptions',
+                    name: 'subscriptions-management',
+                    component: SubscriptionManagementComponent,
+                    meta: { title: 'Planes de Suscripción' }
+                },
+                // =========================================================================
 
 
 

@@ -261,7 +261,6 @@
     },
     "loading": "Cargando vehículos...",
     "no_vehicles": "No se encontraron vehículos",
-
     "columns": {
       "license_plate": "Placa",
       "vehicle": "Vehículo",
@@ -307,7 +306,7 @@
       "inactive": "Inactivo"
     },
     "messages": {
-      "na": "N/A",  
+      "na": "N/A",
       "no_owner_specified": "Propietario no especificado",
       "notice": "Aviso",
       "loaded_from_list": "Detalles del vehículo cargados desde la lista de vehículos",
@@ -582,5 +581,17 @@
     "network_error": "No se pudo conectar con el servidor para cargar {context}. Verifique su conexión a internet.",
     "data_format_error": "Error en el formato de datos del servidor: {message}",
     "invalid_format": "Formato de {context} inválido del servidor"
+  },
+  "subscription": {
+    "title": "Inicia Tu Suscripción",
+    "description": "Suscríbete a un plan SafeCar para acceder a funciones avanzadas y herramientas para tu taller",
+    "select_plan": "Selecciona un Plan",
+    "selected_plan": "Plan Seleccionado",
+    "payment_method": "Método de Pago",
+    "success_title": "Suscripción Exitosa",
+    "success_message": "Suscrito exitosamente a {0}.",
+    "plan_popular_label": "Más Popular",
+    "price_per_month": "por mes",
+    "Selected": "Seleccionado"
   }
 }

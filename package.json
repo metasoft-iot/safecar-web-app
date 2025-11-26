@@ -16,6 +16,7 @@
     "@iconify/vue": "^5.0.0",
     "@primevue/core": "^4.4.0",
     "@primevue/themes": "^4.4.0",
+    "@stripe/stripe-js": "^8.5.3",
     "axios": "^1.12.2",
     "i18n": "^0.15.2",
     "iconify": "^1.4.0",
