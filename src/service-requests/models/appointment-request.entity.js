@@ -279,6 +279,7 @@ export class AppointmentRequest {
    * Creates a new instance of AppointmentRequest.
    * 
    * @param {Object} params - Parameters to create the appointment request
+   * @param {number|null} [params.id=null] - Database unique identifier (primary key)
    * @param {string|null} [params.appointmentId=null] - Unique appointment identifier
    * @param {Object|null} [params.appointmentRequest=null] - Specific request details
    * @param {Object|null} [params.customer=null] - Customer information
@@ -288,6 +289,7 @@ export class AppointmentRequest {
    * @param {string|null} [params.status=null] - Current appointment status
    */
   constructor({
+    id = null,
     appointmentId = null,
     appointmentRequest = null,
     customer = null,
@@ -295,15 +297,41 @@ export class AppointmentRequest {
     assignedMechanic = null,
     vehicleTelemetry = null,
     status = null,
+    // Campos adicionales del backend
+    startAt = null,
+    endAt = null,
+    serviceType = null,
+    customServiceDescription = null,
+    mechanicId = null,
+    vehicleId = null,
+    driverId = null,
+    workshopId = null,
+    notes = null,
+    driver = null
   } = {}) {
+    /** @type {number|null} Database unique identifier */
+    this.id = id;
     /** @type {string|null} Unique appointment identifier */
     this.appointmentId = appointmentId;
     /** @type {AppointmentRequestDetails|null} Specific request details */
-    this.appointmentRequest = appointmentRequest
+    this.appointmentDetails = appointmentRequest
       ? new AppointmentRequestDetails(appointmentRequest)
-      : null;
+      : (startAt || endAt || serviceType ? new AppointmentRequestDetails({
+        scheduledDate: startAt ? startAt.split('T')[0] : null,
+        startTime: startAt ? startAt.split('T')[1] : null,
+        endTime: endAt ? endAt.split('T')[1] : null,
+        requestedService: serviceType === 'CUSTOM' ? customServiceDescription : serviceType,
+        requestDate: startAt
+      }) : null);
     /** @type {Customer|null} Customer information */
-    this.customer = customer ? new Customer(customer) : null;
+    this.customer = customer ? new Customer(customer)
+      : (driver ? new Customer({
+        customerId: driverId,
+        firstName: driver.fullName ? driver.fullName.split(' ')[0] : '',
+        lastName: driver.fullName ? driver.fullName.split(' ').slice(1).join(' ') : '',
+        phoneNumber: driver.phone,
+        email: driver.email
+      }) : null);
     /** @type {Vehicle|null} Vehicle information */
     this.vehicle = vehicle ? new Vehicle(vehicle) : null;
     /** @type {Mechanic|null} Assigned mechanic information */
@@ -316,5 +344,25 @@ export class AppointmentRequest {
       : null;
     /** @type {string|null} Current appointment status */
     this.status = status;
+
+    // Campos adicionales mapeados directamente del backend
+    /** @type {string|null} Start timestamp */
+    this.startAt = startAt;
+    /** @type {string|null} End timestamp */
+    this.endAt = endAt;
+    /** @type {string|null} Service type */
+    this.serviceType = serviceType;
+    /** @type {string|null} Custom service description */
+    this.customServiceDescription = customServiceDescription;
+    /** @type {number|null} Mechanic ID */
+    this.mechanicId = mechanicId;
+    /** @type {number|null} Vehicle ID */
+    this.vehicleId = vehicleId;
+    /** @type {number|null} Driver ID (Person Profile ID) */
+    this.driverId = driverId;
+    /** @type {number|null} Workshop ID */
+    this.workshopId = workshopId;
+    /** @type {Array|null} Service notes */
+    this.serviceNotes = notes || [];
   }
 }

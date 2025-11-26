@@ -156,6 +156,47 @@ export default {
           }
         }
 
+        // Obtener datos del mecánico asignado si existe
+        if (appointmentData.mechanicId) {
+          try {
+            const workshopId = await this.mechanicApiService.getCurrentWorkshopId();
+            const mechanicResponse = await http.get(`/workshops/${workshopId}/mechanics/${appointmentData.mechanicId}`);
+            const mechanicData = mechanicResponse.data;
+            
+            // Enriquecer con el profile del mecánico
+            if (mechanicData.profileId) {
+              try {
+                const profileResponse = await http.get(`/person-profiles/${mechanicData.profileId}`);
+                const profile = profileResponse.data;
+                
+                enrichedData.assignedMechanic = {
+                  id: mechanicData.id,
+                  mechanicId: mechanicData.id,
+                  profileId: mechanicData.profileId,
+                  fullName: profile.fullName || `Mecánico #${mechanicData.profileId}`,
+                  specialization: mechanicData.specializations && mechanicData.specializations.length > 0 
+                    ? mechanicData.specializations.join(', ') 
+                    : 'General',
+                  contactNumber: profile.phone || 'N/A',
+                  email: 'N/A' // Email no está en PersonProfile
+                };
+              } catch (profileError) {
+                console.warn('Could not fetch mechanic profile:', profileError);
+                enrichedData.assignedMechanic = {
+                  id: mechanicData.id,
+                  mechanicId: mechanicData.id,
+                  fullName: `Mecánico #${mechanicData.id}`,
+                  specialization: 'General'
+                };
+              }
+            }
+          } catch (error) {
+            console.warn('Could not fetch mechanic:', error);
+            enrichedData.assignedMechanic = null;
+          }
+        }
+
+
         this.item = new AppointmentRequest(enrichedData);
         
         // Completar todos los pasos
