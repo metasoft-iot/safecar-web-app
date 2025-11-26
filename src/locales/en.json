@@ -336,7 +336,16 @@
         "details": "Details",
         "vehicle_details": "Vehicle Details",
         "telemetry": "Telemetry",
-        "analytics": "Analytics"
+        "analytics": "Analytics",
+        "insights": "Insights"
+      },
+      "insights": {
+        "summary_title": "Insight Summary",
+        "risk_level": "Risk Level",
+        "generated_at": "Generated At",
+        "recommendations_title": "Recommendations",
+        "no_recommendations": "No recommendations available",
+        "no_insights_generated": "No insights generated for this vehicle yet"
       },
       "vehicle_information": {
         "title": "Vehicle Information",

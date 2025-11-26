@@ -323,7 +323,16 @@
         "details": "Detalles",
         "vehicle_details": "Detalles del Vehículo",
         "telemetry": "Telemetría",
-        "analytics": "Análisis"
+        "analytics": "Análisis",
+        "insights": "Insights"
+      },
+      "insights": {
+        "summary_title": "Resumen de Insights",
+        "risk_level": "Nivel de Riesgo",
+        "generated_at": "Generado el",
+        "recommendations_title": "Recomendaciones",
+        "no_recommendations": "No hay recomendaciones disponibles",
+        "no_insights_generated": "No se han generado insights para este vehículo aún"
       },
       "vehicle_information": {
         "title": "Información del Vehículo",

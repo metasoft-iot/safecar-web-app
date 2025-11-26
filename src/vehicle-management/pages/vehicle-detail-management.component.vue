@@ -2,6 +2,7 @@
 import VehicleDetail from '../components/vehicle-detail.component.vue';
 import VehicleTelemetryDetail from '../components/vehicle-telemetry-detail.component.vue';
 import VehicleAnalyticsDetail from '../components/vehicle-analytics-detail.component.vue';
+import VehicleInsightsDetail from '../components/vehicle-insights-detail.component.vue';
 import {Vehicle} from "../models/vehicle.entity.js";
 import {VehicleApiService} from "../services/vehicle-api.service.js";
 
@@ -10,7 +11,8 @@ export default {
   components: {
     VehicleDetail,
     VehicleTelemetryDetail,
-    VehicleAnalyticsDetail
+    VehicleAnalyticsDetail,
+    VehicleInsightsDetail
   },
 
   data() {
@@ -30,7 +32,8 @@ export default {
       return [
         {label: t('vehicle_management.detail.tabs.vehicle_details'), icon: 'pi pi-car'},
         {label: t('vehicle_management.detail.tabs.telemetry'), icon: 'pi pi-chart-line'},
-        {label: t('vehicle_management.detail.tabs.analytics'), icon: 'pi pi-chart-bar'}
+        {label: t('vehicle_management.detail.tabs.analytics'), icon: 'pi pi-chart-bar'},
+        {label: t('vehicle_management.detail.tabs.insights'), icon: 'pi pi-lightbulb'}
       ];
     }
   },
@@ -207,6 +210,20 @@ export default {
           
           <div class="tab-content-wrapper">
             <VehicleAnalyticsDetail :analytics="vehicle.analytics" />
+          </div>
+        </pv-tab-panel>
+
+        <!-- Insights Tab -->
+        <pv-tab-panel>
+          <template #header>
+            <div class="tab-header">
+              <i :class="tabs[3].icon" class="tab-icon"></i>
+              <span class="tab-label">{{ tabs[3].label }}</span>
+            </div>
+          </template>
+          
+          <div class="tab-content-wrapper">
+            <VehicleInsightsDetail :vehicleId="vehicle.id || vehicle.vehicleId" />
           </div>
         </pv-tab-panel>
 
