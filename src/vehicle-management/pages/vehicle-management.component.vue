@@ -255,26 +255,36 @@ export default {
       try {
         const response = await this.vehicleApiService.getAll();
         console.log('Raw API response (Appointments for Vehicles):', response);
+        console.log('Total appointments:', response.data?.length || 0);
         
         // Filtrar SOLO citas que están EN PROGRESO (vehículos siendo atendidos)
         const appointments = (response.data || []).filter(app => app.status === 'IN_PROGRESS');
         console.log('Filtered IN_PROGRESS appointments:', appointments);
+        console.log('Total IN_PROGRESS appointments:', appointments.length);
 
-        // Extraer vehículos únicos y enriquecer con datos del endpoint /vehicles
+        // Extraer vehículos únicos por vehicleId
         const vehiclesMap = new Map();
 
         // Usar Promise.all para obtener los datos de cada vehículo
-        await Promise.all(
-          appointments.map(async (app) => {
-            if (!app.vehicleId) return;
+        const vehiclePromises = appointments.map(async (app) => {
+            if (!app.vehicleId) {
+                console.warn('Appointment without vehicleId:', app);
+                return null;
+            }
 
-            const vehicleKey = app.vehicleId;
-            if (vehiclesMap.has(vehicleKey)) return; // Skip duplicates
+            const vehicleKey = String(app.vehicleId); // Asegurar que sea string para consistencia
+            
+            // Skip if already processed
+            if (vehiclesMap.has(vehicleKey)) {
+                console.log(`Vehicle ${vehicleKey} already processed, skipping...`);
+                return null;
+            }
 
             try {
               // Obtener datos completos del vehículo  
               const vehicleResponse = await http.get(`/vehicles/${app.vehicleId}`);
               const vehicleData = vehicleResponse.data;
+              console.log(`Fetched vehicle data for ID ${app.vehicleId}:`, vehicleData);
 
               // Obtener datos del owner (driver/person profile)
               let ownerData = null;
@@ -304,14 +314,19 @@ export default {
               };
 
               vehiclesMap.set(vehicleKey, enrichedVehicle);
+              return enrichedVehicle;
             } catch (error) {
-              console.warn(`Could not fetch vehicle ${app.vehicleId}:`, error.message);
+              console.error(`Error fetching vehicle ${app.vehicleId}:`, error);
+              return null;
             }
-          })
-        );
+        });
 
+        // Esperar a que todas las promesas se resuelvan
+        await Promise.all(vehiclePromises);
+        
         const vehicles = Array.from(vehiclesMap.values());
-        console.log('Enriched vehicles being serviced:', vehicles);
+        console.log('Final enriched vehicles being serviced:', vehicles);
+        console.log('Total vehicles to display:', vehicles.length);
 
         // Map to table structure
         this.itemsArray = vehicles.map(item => {
@@ -338,7 +353,8 @@ export default {
           };
         });
 
-        console.log('Mapped items for table:', this.itemsArray);
+        console.log('Final mapped items for table:', this.itemsArray);
+        console.log('Items array length:', this.itemsArray.length);
 
       } catch (error) {
         console.error('API Error:', error);

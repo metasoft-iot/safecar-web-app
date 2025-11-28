@@ -1,6 +1,7 @@
-import {createApp} from 'vue'
+import { createApp } from 'vue'
 //importar styles.css global de src/
 import './styles.css'
+import './styles-responsive.css'
 
 import App from './App.vue'
 
@@ -70,7 +71,7 @@ import {
 import Chip from 'primevue/chip';
 
 
-import {createPinia} from "pinia";
+import { createPinia } from "pinia";
 
 
 
@@ -94,7 +95,7 @@ import {createPinia} from "pinia";
  */
 
 //create app instance
-const app=createApp(App)
+const app = createApp(App)
 
 // Use Pinia BEFORE Router to ensure stores are available for guards
 const pinia = createPinia();
@@ -161,9 +162,9 @@ app.component('pv-button', Button)
     .component('pv-tab-view', TabView)
     .component('pv-data-view', DataView)
     .component('pv-accordion', Accordion)
-    .component('pv-accordion-panel',AccordionPanel)
-    .component('pv-accordion-header',AccordionHeader)
-    .component('pv-accordion-content',AccordionContent)
+    .component('pv-accordion-panel', AccordionPanel)
+    .component('pv-accordion-header', AccordionHeader)
+    .component('pv-accordion-content', AccordionContent)
     .component('pv-badge', Badge)
     .component('pv-split-button', SplitButton)
     .component('pv-auto-complete', AutoComplete)
@@ -173,7 +174,7 @@ app.component('pv-button', Button)
     .component('pv-input-switch', InputSwitch)
     .component('pv-chips', Chips)
     .component('pv-progress-spinner', ProgressSpinner)
-    .component('pv-input-mask', InputMask )
+    .component('pv-input-mask', InputMask)
     .component('pv-chip', Chip)
     .component('pv-paginator', Paginator);
 

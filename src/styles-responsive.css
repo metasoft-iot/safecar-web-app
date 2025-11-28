@@ -1,0 +1,213 @@
+
+/* ========== RESPONSIVE DESIGN GLOBAL ========== */
+
+/* Tablets pequeños y móviles grandes */
+@media (max-width: 992px) {
+  /* Reducir tamaños de fuente */
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  h3 {
+    font-size: 1.35rem;
+  }
+  
+  /* Tablas responsive - scroll horizontal */
+  .p-datatable-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Reducir padding en tarjetas */
+  .p-card .p-card-content {
+    padding: var(--spacing-md);
+  }
+  
+  /* Botones más pequeños en móvil */
+  .p-button {
+    font-size: 0.9rem !important;
+    padding: 0.625rem 1rem !important;
+  }
+}
+
+/* Tablets */
+@media (max-width: 768px) {
+  /* Reducir aún más los títulos */
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  /* Ajustar padding general */
+  .p-card {
+    margin: var(--spacing-sm);
+  }
+  
+  .p-card .p-card-content {
+    padding: var(--spacing-sm);
+  }
+  
+  /* Tablas más compactas */
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr > td {
+    padding: var(--table-cell-padding-sm) !important;
+    font-size: 0.8rem !important;
+  }
+  
+  /* Formularios responsive */
+  .p-inputtext,
+  .p-dropdown,
+  .p-calendar .p-inputtext {
+    font-size: 0.9rem;
+    padding: var(--spacing-sm);
+  }
+  
+  /* Paginador más compacto */
+  .p-paginator {
+    padding: 0.75rem !important;
+  }
+  
+  .p-paginator .p-paginator-pages .p-paginator-page {
+    min-width: 2rem;
+    height: 2rem;
+  }
+  
+  /* Dialogs a pantalla completa en móvil */
+  .p-dialog {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+}
+
+/* Móviles */
+@media (max-width: 480px) {
+  /* Reducir mucho más los títulos */
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  h3 {
+    font-size: 1.1rem;
+  }
+  
+  /* Padding mínimo */
+  .p-card {
+    margin: var(--spacing-xs);
+  }
+  
+  .p-card .p-card-content {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  /* Tablas muy compactas */
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr > td {
+    padding: 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Botones más pequeños */
+  .p-button {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  .p-button-sm {
+    font-size: 0.7rem !important;
+    padding: 0.4rem 0.6rem !important;
+  }
+  
+  /* Formularios compactos */
+  .p-inputtext,
+  .p-dropdown,
+  .p-calendar .p-inputtext {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+  
+  /* Selectores más pequeños */
+  .p-dropdown-item {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.85rem;
+  }
+  
+  /* Paginador muy compacto */
+  .p-paginator {
+    padding: 0.5rem !important;
+    font-size: 0.8rem;
+  }
+  
+  .p-paginator .p-paginator-pages .p-paginator-page {
+    min-width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Dialogs pantalla completa */
+  .p-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Ocultar columnas menos importantes en tablas móviles */
+  .p-datatable-tbody > tr > td:nth-child(n+5),
+  .p-datatable-thead > tr > th:nth-child(n+5) {
+    display: none;
+  }
+}
+
+/* Soporte para orientación horizontal en móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reducir altura de headers */
+  .toolbar-tracker {
+    height: 50px;
+  }
+  
+  /* Ajustar sidebars si están visibles */
+  .sidebar-fixed {
+    width: 220px;
+  }
+}
+
+/* Optimizaciones de rendimiento para dispositivos móviles */
+@media (max-width: 768px) {
+  /* Reducir animaciones en móvil para mejor rendimiento */
+  * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  /* Optimizar scroll */
+  .p-datatable-wrapper,
+  .content-area {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Soporte para alto DPI (Retina displays) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Fuentes más nítidas */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

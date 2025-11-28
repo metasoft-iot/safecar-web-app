@@ -8,7 +8,8 @@ export default {
   data() {
     return {
       drawer: true,
-      visible: true
+      visible: true,
+      isMobileMenuOpen: false
     };
   },
 
@@ -30,6 +31,17 @@ export default {
   },
 
   methods: {
+    toggleMobileMenu() {
+      this.isMobileMenuOpen = !this.isMobileMenuOpen;
+      // Emitir evento para que el layout lo reciba
+      this.$emit('toggle-mobile-menu', this.isMobileMenuOpen);
+    },
+    
+    closeMobileMenu() {
+      this.isMobileMenuOpen = false;
+      this.$emit('toggle-mobile-menu', false);
+    },
+    
     logout() {
       // Implementar lógica de cierre de sesión
       this.$router.push('/login');
@@ -38,15 +50,32 @@ export default {
 
   created() {
     console.log(this.$t('sidebar.created_success'));
+  },
+  
+  mounted() {
+    // Escuchar cambios del evento global
+    window.addEventListener('toggle-mobile-menu', (e) => {
+      this.isMobileMenuOpen = e.detail;
+    });
+  },
+  
+  beforeUnmount() {
+    window.removeEventListener('toggle-mobile-menu', () => {});
   }
-
 
 }
 
 </script>
 
 <template>
-  <div class="sidebar-fixed">
+  <!-- Overlay para móvil -->
+  <div 
+    v-if="isMobileMenuOpen" 
+    class="mobile-overlay"
+    @click="closeMobileMenu"
+  ></div>
+  
+  <div class="sidebar-fixed" :class="{ 'sidebar-fixed--mobile-open': isMobileMenuOpen }">
     <aside class="sidebar-safe">
       <!-- Header del sidebar -->
       <div class="w-full sidebar-header justify-content-center align-items-center">
@@ -54,6 +83,10 @@ export default {
           <i class="pi pi-mobile brand-icon"></i>
           <h3 class="brand-title">{{ $t('sidebar.brand_title') }}</h3>
         </div>
+        <!-- Botón de cerrar para móvil -->
+        <button class="mobile-close-btn" @click="closeMobileMenu">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
 
       <!-- Contenido del sidebar -->
@@ -68,6 +101,7 @@ export default {
               <router-link
                 :to="item.to"
                 class="sidebar-link"
+                @click="closeMobileMenu"
               >
                 <i :class="item.icon" class="sidebar-icon"></i>
                 <span class="sidebar-label">{{ item.label }}</span>
@@ -96,6 +130,28 @@ export default {
   --color-primary: #1e40af;
 }
 
+/* Overlay para móvil */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .sidebar-fixed {
   position: fixed;
   top: 0;
@@ -103,6 +159,7 @@ export default {
   height: 100vh;
   z-index: 100;
   width: 260px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-safe {
@@ -122,6 +179,7 @@ export default {
   min-height: 70px;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .sidebar-brand {
@@ -145,6 +203,32 @@ export default {
   margin: 0;
   line-height: 1.2;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Botón de cerrar para móvil - oculto en desktop */
+.mobile-close-btn {
+  display: none;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-50%) rotate(90deg);
 }
 
 .sidebar-content {
@@ -235,15 +319,43 @@ export default {
 }
 
 /* Responsive design */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .sidebar-fixed {
-    width: 260px;
+    width: 240px;
+  }
+}
+
+@media (max-width: 992px) {
+  /* En tablets y móviles, ocultar el sidebar por defecto */
+  .sidebar-fixed {
+    transform: translateX(-100%);
+  }
+  
+  /* Mostrar sidebar cuando está abierto en móvil */
+  .sidebar-fixed--mobile-open {
+    transform: translateX(0);
+  }
+  
+  /* Mostrar overlay en móvil */
+  .mobile-overlay {
+    display: block;
+  }
+  
+  /* Mostrar botón de cerrar en móvil */
+  .mobile-close-btn {
+    display: flex;
+  }
+  
+  .sidebar-brand {
+    justify-content: flex-start;
+    padding-left: 0.5rem;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar-fixed {
-    width: 240px;
+    width: 280px;
+    max-width: 80vw;
   }
   
   .sidebar-link {
@@ -253,15 +365,48 @@ export default {
   .brand-title {
     font-size: 1.1rem;
   }
+  
+  .sidebar-content {
+    padding: 1rem 0;
+  }
 }
 
 @media (max-width: 480px) {
   .sidebar-fixed {
-    width: 220px;
+    width: 260px;
+    max-width: 85vw;
+  }
+  
+  .sidebar-header {
+    padding: 1rem 0.75rem;
+    min-height: 60px;
   }
   
   .brand-title {
     font-size: 1rem;
+  }
+  
+  .brand-icon {
+    font-size: 1.5rem;
+  }
+  
+  .sidebar-link {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9rem;
+  }
+  
+  .sidebar-icon {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+  }
+  
+  .sidebar-footer {
+    padding: 1rem 0.75rem;
+  }
+  
+  .sidebar-logout-btn {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
   }
 }
 </style>

@@ -31,6 +31,14 @@ export default {
       localStorage.setItem('preferred-language', newLocale);
       
       console.log(`Language switched to: ${newLocale === 'en' ? 'English' : 'Spanish'}`);
+    },
+    
+    toggleMobileMenu() {
+      // Emitir evento personalizado global para abrir/cerrar el sidebar
+      const event = new CustomEvent('toggle-mobile-menu', { 
+        detail: true 
+      });
+      window.dispatchEvent(event);
     }
   },
 
@@ -50,6 +58,11 @@ export default {
 
   <header class="toolbar-tracker">
     <div class="toolbar-content">
+      <!-- Botón hamburguesa para móvil -->
+      <button class="mobile-menu-btn" @click="toggleMobileMenu">
+        <i class="pi pi-bars"></i>
+      </button>
+      
       <!-- Spacer para empujar el switcher a la derecha -->
       <div class="toolbar-spacer"></div>
       
@@ -109,6 +122,33 @@ export default {
 
 .toolbar-spacer {
   flex: 1;
+}
+
+/* Botón hamburguesa para móvil */
+.mobile-menu-btn {
+  display: none; /* Oculto por defecto en desktop */
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-right: 1rem;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.mobile-menu-btn:active {
+  transform: scale(0.95);
 }
 
 /* Language Switcher Styles */
@@ -203,6 +243,13 @@ export default {
 }
 
 /* Responsive design */
+@media (max-width: 992px) {
+  /* Mostrar botón hamburguesa en tablets y móviles */
+  .mobile-menu-btn {
+    display: flex;
+  }
+}
+
 @media (max-width: 768px) {
   .toolbar-content {
     padding: 0 15px;
@@ -234,9 +281,19 @@ export default {
     font-size: 0.8rem;
     min-width: 24px;
   }
+  
+  .mobile-menu-btn {
+    font-size: 1.3rem;
+    width: 40px;
+    height: 40px;
+  }
 }
 
 @media (max-width: 480px) {
+  .toolbar-content {
+    padding: 0 10px;
+  }
+  
   .language-toggle {
     padding: 4px 8px;
   }
@@ -263,6 +320,13 @@ export default {
     font-size: 0.75rem;
     min-width: 20px;
     padding: 2px 4px;
+  }
+  
+  .mobile-menu-btn {
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    margin-right: 0.5rem;
   }
 }
 </style>

@@ -178,26 +178,38 @@ export default {
     async saveManagementChanges() {
         if (!this.selectedAppointment) return;
 
+        // Validar que no se pueda cambiar a IN_PROGRESS sin mecánico asignado
+        if (this.formStatus === 'IN_PROGRESS') {
+            const hasMechanic = this.formMechanicId || this.selectedAppointment.assignedMechanic;
+            if (!hasMechanic) {
+                this.$toast.add({
+                    severity: 'error', 
+                    summary: 'Mecánico Requerido', 
+                    detail: 'Debe asignar un mecánico antes de cambiar el estado a "En Progreso"', 
+                    life: 5000
+                });
+                return;
+            }
+        }
+
         this.manageDialogLoading = true;
         const appointmentId = this.selectedAppointment.id;
         let successCount = 0;
         let errorCount = 0;
 
         try {
-            // 1. Update Status if changed
-            if (this.formStatus && this.formStatus !== this.selectedAppointment.status) {
-                await this.appointmentRequestApiService.updateStatus(appointmentId, this.formStatus);
-                successCount++;
-            }
-
-            // 2. Assign Mechanic if changed (and selected)
-            // Note: If null, we might want to unassign, but API might only support assign or unassign specific.
-            // For now, let's assume we only assign if a mechanic is selected.
-            // The unassign logic would require a separate check or API support.
+            // 1. Assign Mechanic FIRST if changed (and selected)
+            // This ensures mechanic is assigned before changing status to IN_PROGRESS
             const currentMechanicId = this.selectedAppointment.assignedMechanic ? this.selectedAppointment.assignedMechanic.mechanicId : null;
             
             if (this.formMechanicId && this.formMechanicId !== currentMechanicId) {
                 await this.appointmentRequestApiService.assignMechanic(appointmentId, this.formMechanicId);
+                successCount++;
+            }
+
+            // 2. Update Status AFTER mechanic assignment (if changed)
+            if (this.formStatus && this.formStatus !== this.selectedAppointment.status) {
+                await this.appointmentRequestApiService.updateStatus(appointmentId, this.formStatus);
                 successCount++;
             }
 
@@ -521,6 +533,22 @@ export default {
     },
 
     async onStatusChange(item) {
+        // Validar que no se pueda cambiar a IN_PROGRESS sin mecánico asignado
+        if (item.status === 'IN_PROGRESS') {
+            const hasMechanic = item.mechanicId || item.assignedMechanic;
+            if (!hasMechanic) {
+                this.$toast.add({
+                    severity: 'error', 
+                    summary: 'Mecánico Requerido', 
+                    detail: 'Debe asignar un mecánico antes de cambiar el estado a "En Progreso"', 
+                    life: 5000
+                });
+                // Refresh to revert dropdown
+                this.getAll();
+                return;
+            }
+        }
+
         try {
             await this.appointmentRequestApiService.updateStatus(item.id, item.status);
             this.$toast.add({severity: 'success', summary: 'Success', detail: 'Status updated successfully', life: 3000});

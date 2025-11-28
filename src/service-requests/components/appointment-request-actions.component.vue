@@ -233,7 +233,7 @@ export default {
     async startAppointment() {
       // Validar que haya un mecánico asignado
       if (!this.item.mechanicId && !this.item.assignedMechanic) {
-        this.showToast('warn', 'Mecánico Requerido', 'Debe asignar un mecánico antes de iniciar el servicio', 5000);
+        this.showToast('error', 'Mecánico Requerido', 'Debe asignar un mecánico antes de iniciar el servicio. Por favor, asigne un mecánico desde la sección "Asignar Mecánico".', 6000);
         return;
       }
 
@@ -247,7 +247,7 @@ export default {
         };
         
         this.$emit('appointment-updated', updatedItem);
-        this.showToast('success', 'Servicio Iniciado', 'El servicio ha sido iniciado');
+        this.showToast('success', 'Servicio Iniciado', 'El servicio ha sido iniciado exitosamente');
       } catch (error) {
         this.handleError('Error al iniciar el servicio', error);
       } finally {

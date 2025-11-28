@@ -52,6 +52,7 @@ export default {
   flex-direction: column;
   margin-left: 260px; /* Ancho del sidebar */
   height: 100vh;
+  transition: margin-left 0.3s ease;
 }
 
 .content-area {
@@ -64,9 +65,37 @@ export default {
 }
 
 /* Responsive design para pantallas pequeñas */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 240px;
+  }
+}
+
+@media (max-width: 992px) {
+  /* En tablets y móviles, sin margen porque sidebar está oculto */
   .main-content {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .content-area {
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    font-size: 0.9rem;
   }
 }
 </style>
