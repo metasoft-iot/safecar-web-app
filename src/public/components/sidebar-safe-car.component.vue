@@ -22,6 +22,7 @@ export default {
         { label: this.$t('sidebar.menu.appointments'), icon: 'pi pi-fw pi-file-edit', to: `/safe-car/mechanic/service-request` },
         { label: "Completed Services", icon: 'pi pi-fw pi-check-circle', to: `/safe-car/mechanic/service-history` },
         { label: this.$t('sidebar.menu.vehicles'), icon: 'pi pi-fw pi-chart-bar', to: `/safe-car/mechanic/vehicle-management` },
+        { label: 'Devices', icon: 'pi pi-fw pi-box', to: `/safe-car/mechanic/devices` },
         { label: 'Mechanics', icon: 'pi pi-fw pi-users', to: `/safe-car/mechanic/management` },
         { label: 'Subscriptions', icon: 'pi pi-fw pi-credit-card', to: `/safe-car/mechanic/subscriptions` },
         { label: 'Profile', icon: 'pi pi-fw pi-user', to: `/safe-car/mechanic/profile` },
@@ -36,12 +37,12 @@ export default {
       // Emitir evento para que el layout lo reciba
       this.$emit('toggle-mobile-menu', this.isMobileMenuOpen);
     },
-    
+
     closeMobileMenu() {
       this.isMobileMenuOpen = false;
       this.$emit('toggle-mobile-menu', false);
     },
-    
+
     logout() {
       // Implementar lógica de cierre de sesión
       this.$router.push('/login');
@@ -51,14 +52,14 @@ export default {
   created() {
     console.log(this.$t('sidebar.created_success'));
   },
-  
+
   mounted() {
     // Escuchar cambios del evento global
     window.addEventListener('toggle-mobile-menu', (e) => {
       this.isMobileMenuOpen = e.detail;
     });
   },
-  
+
   beforeUnmount() {
     window.removeEventListener('toggle-mobile-menu', () => {});
   }
@@ -69,12 +70,12 @@ export default {
 
 <template>
   <!-- Overlay para móvil -->
-  <div 
-    v-if="isMobileMenuOpen" 
+  <div
+    v-if="isMobileMenuOpen"
     class="mobile-overlay"
     @click="closeMobileMenu"
   ></div>
-  
+
   <div class="sidebar-fixed" :class="{ 'sidebar-fixed--mobile-open': isMobileMenuOpen }">
     <aside class="sidebar-safe">
       <!-- Header del sidebar -->
@@ -330,22 +331,22 @@ export default {
   .sidebar-fixed {
     transform: translateX(-100%);
   }
-  
+
   /* Mostrar sidebar cuando está abierto en móvil */
   .sidebar-fixed--mobile-open {
     transform: translateX(0);
   }
-  
+
   /* Mostrar overlay en móvil */
   .mobile-overlay {
     display: block;
   }
-  
+
   /* Mostrar botón de cerrar en móvil */
   .mobile-close-btn {
     display: flex;
   }
-  
+
   .sidebar-brand {
     justify-content: flex-start;
     padding-left: 0.5rem;
@@ -357,15 +358,15 @@ export default {
     width: 280px;
     max-width: 80vw;
   }
-  
+
   .sidebar-link {
     padding: 0.875rem 1rem;
   }
-  
+
   .brand-title {
     font-size: 1.1rem;
   }
-  
+
   .sidebar-content {
     padding: 1rem 0;
   }
@@ -376,34 +377,34 @@ export default {
     width: 260px;
     max-width: 85vw;
   }
-  
+
   .sidebar-header {
     padding: 1rem 0.75rem;
     min-height: 60px;
   }
-  
+
   .brand-title {
     font-size: 1rem;
   }
-  
+
   .brand-icon {
     font-size: 1.5rem;
   }
-  
+
   .sidebar-link {
     padding: 0.75rem 0.875rem;
     font-size: 0.9rem;
   }
-  
+
   .sidebar-icon {
     font-size: 1.1rem;
     margin-right: 0.75rem;
   }
-  
+
   .sidebar-footer {
     padding: 1rem 0.75rem;
   }
-  
+
   .sidebar-logout-btn {
     padding: 0.625rem 0.875rem;
     font-size: 0.9rem;

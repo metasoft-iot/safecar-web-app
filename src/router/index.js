@@ -115,6 +115,15 @@ const router = createRouter({
                 },
                 // =========================================================================
 
+                // =================== Rutas para la gestion de dispositivos ==================
+                {
+                    path: 'mechanic/devices',
+                    name: 'device-management',
+                    component: () => import('@/vehicle-management/pages/device-management.component.vue'),
+                    meta: { title: 'Gestión de Dispositivos' }
+                },
+                // =========================================================================
+
                 // =================== Rutas para la gestion de mecánicos ==================
                 {
                     path: 'mechanic/management',
