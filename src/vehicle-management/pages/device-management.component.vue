@@ -46,6 +46,9 @@ export default {
             this.device = { ...device };
             this.deviceDialog = true;
         },
+        viewTelemetry(device) {
+            this.$router.push(`/safe-car/mechanic/devices/${device.id}/telemetry`);
+        },
         confirmDeleteDevice(device) {
             this.device = device;
             this.deleteDeviceDialog = true;
@@ -140,8 +143,9 @@ export default {
                             </span>
                         </template>
                     </pv-column>
-                    <pv-column :exportable="false" style="min-width:8rem">
+                    <pv-column :exportable="false" style="min-width:12rem">
                         <template #body="slotProps">
+                            <pv-button icon="pi pi-chart-line" class="p-button-rounded p-button-info mr-2" @click="viewTelemetry(slotProps.data)" v-tooltip.top="'View Telemetry'" />
                             <pv-button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editDevice(slotProps.data)" />
                             <pv-button icon="pi pi-trash" class="p-button-rounded p-button-warning" @click="confirmDeleteDevice(slotProps.data)" />
                         </template>

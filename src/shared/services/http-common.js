@@ -1,6 +1,6 @@
 // http-common.js
 import axios from "axios";
-const API_BASE_URL = "https://safecar.joyeria-sharvel.com/api/v1";
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 const http = axios.create({ baseURL: API_BASE_URL });
 

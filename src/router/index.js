@@ -122,6 +122,12 @@ const router = createRouter({
                     component: () => import('@/vehicle-management/pages/device-management.component.vue'),
                     meta: { title: 'Gestión de Dispositivos' }
                 },
+                {
+                    path: 'mechanic/devices/:id/telemetry',
+                    name: 'device-telemetry',
+                    component: () => import('@/vehicle-management/pages/device-telemetry.component.vue'),
+                    meta: { title: 'Telemetría del Dispositivo' }
+                },
                 // =========================================================================
 
                 // =================== Rutas para la gestion de mecánicos ==================
