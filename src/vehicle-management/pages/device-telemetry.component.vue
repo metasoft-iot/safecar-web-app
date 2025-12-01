@@ -98,7 +98,7 @@ export default {
 
                     <pv-column header="Engine Temp">
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.engineTemperature?.value !== null && slotProps.data.sample?.engineTemperature?.value !== undefined">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.engineTemperature?.value != null">
                                 {{ slotProps.data.sample.engineTemperature.value }} °C
                             </span>
                             <span v-else>-</span>
@@ -107,7 +107,7 @@ export default {
 
                     <pv-column header="Cabin Temp">
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.cabinTemperature?.value !== null && slotProps.data.sample?.cabinTemperature?.value !== undefined">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.cabinTemperature?.value != null">
                                 {{ slotProps.data.sample.cabinTemperature.value }} °C
                             </span>
                             <span v-else>-</span>
@@ -116,7 +116,7 @@ export default {
 
                     <pv-column header="Humidity">
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.cabinHumidity?.value !== null && slotProps.data.sample?.cabinHumidity?.value !== undefined">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.cabinHumidity?.value != null">
                                 {{ slotProps.data.sample.cabinHumidity.value }} %
                             </span>
                             <span v-else>-</span>
@@ -125,7 +125,7 @@ export default {
 
                     <pv-column header="Speed">
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.speed !== null">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.speed != null">
                                 {{ slotProps.data.sample.speed }} km/h
                             </span>
                             <span v-else>-</span>
@@ -134,7 +134,7 @@ export default {
 
                     <pv-column header="Fuel">
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.cabinGasLevel !== null">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.cabinGasLevel != null">
                                 {{ slotProps.data.sample.cabinGasLevel }} %
                             </span>
                             <span v-else>-</span>
@@ -143,7 +143,7 @@ export default {
 
                     <pv-column header="Electrical">
                          <template #body="slotProps">
-                            <span v-if="slotProps.data.sample?.electricalCurrent?.value !== null">
+                            <span v-if="slotProps.data.sample && slotProps.data.sample.electricalCurrent?.value != null">
                                 {{ slotProps.data.sample.electricalCurrent.value }} A
                             </span>
                             <span v-else>-</span>
@@ -152,7 +152,7 @@ export default {
 
                     <pv-column header="Location">
                         <template #body="slotProps">
-                            <div v-if="slotProps.data.sample?.location">
+                            <div v-if="slotProps.data.sample && slotProps.data.sample.location">
                                 <small>Lat: {{ slotProps.data.sample.location.latitude }}</small><br>
                                 <small>Lng: {{ slotProps.data.sample.location.longitude }}</small>
                             </div>
