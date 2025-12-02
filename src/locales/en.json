@@ -17,8 +17,12 @@
     "menu": {
       "dashboard": "Dashboard",
       "appointments": "Appointments",
-      "history": "History",
-      "vehicles": "Vehicles"
+      "history": "Completed Appointments",
+      "vehicles": "Vehicles",
+      "devices": "Devices",
+      "mechanics": "Mechanics",
+      "subscriptions": "Subscriptions",
+      "profile": "Profile"
     },
     "logout": "Sign Out",
     "created_success": "Sidebar created successfully"

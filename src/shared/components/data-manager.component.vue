@@ -213,7 +213,7 @@ export default {
         scrollable
         :global-filter-fields="columns.map(col => col.field)"
         data-key="id"
-        current-page-report-template="Mostrando {first} a {last} de {totalRecords} registros"
+        :current-page-report-template="$t('data_table.showing')"
         paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
         responsive-layout="scroll"
         striped-rows
@@ -256,7 +256,7 @@ export default {
         <pv-column
           v-if="showActions"
           :exportable="false"
-          header="Acciones"
+          :header="$t('data_table.actions')"
           header-style="width: 8rem; text-align: center"
           body-style="text-align: center"
         >
@@ -264,7 +264,7 @@ export default {
             <div class="flex gap-1 justify-content-center">
               <pv-button
                   v-if="showViewAction"
-                  label="Ver detalles"
+                  :label="$t('data_table.view_details')"
                   severity="info"
                   text
                   size="small"
@@ -278,7 +278,7 @@ export default {
                   rounded
                   size="small"
                   class="action-button edit-button"
-                  v-tooltip.top="editButtonLabel"
+                  v-tooltip.top="editButtonLabel === 'Editar' ? $t('data_table.edit') : editButtonLabel"
                   @click="$emit('edit-item-requested-manager', slotProps.data)"
               />
               <pv-button
@@ -288,7 +288,7 @@ export default {
                   rounded
                   size="small"
                   class="action-button delete-button"
-                  v-tooltip.top="deleteActionLabel"
+                  v-tooltip.top="deleteActionLabel === 'Eliminar' ? $t('data_table.delete') : deleteActionLabel"
                   @click="$emit('delete-item-requested-manager', slotProps.data)"
               />
             </div>
@@ -299,7 +299,7 @@ export default {
         <template #empty>
           <div class="text-center py-6">
             <i class="pi pi-search text-4xl text-400 mb-3"></i>
-            <p class="text-600 mb-0">No se encontraron registros</p>
+            <p class="text-600 mb-0">{{ $t('data_table.no_records') }}</p>
           </div>
         </template>
 
@@ -307,7 +307,7 @@ export default {
         <template #loading>
           <div class="text-center py-6">
             <pv-progress-spinner style="width:50px;height:50px" stroke-width="4" />
-            <p class="text-600 mt-3 mb-0">Cargando datos...</p>
+            <p class="text-600 mt-3 mb-0">{{ $t('data_table.loading') }}</p>
           </div>
         </template>
       </pv-data-table>

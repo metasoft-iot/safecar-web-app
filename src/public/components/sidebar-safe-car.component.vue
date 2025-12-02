@@ -20,12 +20,12 @@ export default {
       return [
         { label: this.$t('sidebar.menu.dashboard'), icon: 'pi pi-fw pi-chart-line', to: `/safe-car/mechanic/dashboard` },
         { label: this.$t('sidebar.menu.appointments'), icon: 'pi pi-fw pi-file-edit', to: `/safe-car/mechanic/service-request` },
-        { label: "Completed Services", icon: 'pi pi-fw pi-check-circle', to: `/safe-car/mechanic/service-history` },
+        { label: this.$t('sidebar.menu.history'), icon: 'pi pi-fw pi-check-circle', to: `/safe-car/mechanic/service-history` },
         { label: this.$t('sidebar.menu.vehicles'), icon: 'pi pi-fw pi-chart-bar', to: `/safe-car/mechanic/vehicle-management` },
-        { label: 'Devices', icon: 'pi pi-fw pi-box', to: `/safe-car/mechanic/devices` },
-        { label: 'Mechanics', icon: 'pi pi-fw pi-users', to: `/safe-car/mechanic/management` },
-        { label: 'Subscriptions', icon: 'pi pi-fw pi-credit-card', to: `/safe-car/mechanic/subscriptions` },
-        { label: 'Profile', icon: 'pi pi-fw pi-user', to: `/safe-car/mechanic/profile` },
+        { label: this.$t('sidebar.menu.devices'), icon: 'pi pi-fw pi-box', to: `/safe-car/mechanic/devices` },
+        { label: this.$t('sidebar.menu.mechanics'), icon: 'pi pi-fw pi-users', to: `/safe-car/mechanic/management` },
+        { label: this.$t('sidebar.menu.subscriptions'), icon: 'pi pi-fw pi-credit-card', to: `/safe-car/mechanic/subscriptions` },
+        { label: this.$t('sidebar.menu.profile'), icon: 'pi pi-fw pi-user', to: `/safe-car/mechanic/profile` },
 
       ];
     }

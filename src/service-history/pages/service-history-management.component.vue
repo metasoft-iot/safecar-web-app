@@ -3,6 +3,7 @@
 import DataManager from "../../shared/components/data-manager.component.vue";
 import {AppointmentRequestApiService} from "@/service-requests/services/appointment-request-api.service.js";
 import {AppointmentRequest} from "@/service-requests/models/appointment-request.entity.js";
+import http from "../../shared/services/http-common";
 
 export default {
   name: 'service-history-management',
@@ -178,33 +179,83 @@ export default {
       return `${brand} ${model}`.trim() || 'N/A';
     },
 
-    getAll() {
+    async getAll() {
       this.loading = true;
-      this.appointmentRequestApiService.getAll().then(response => {
-        const allAppointments = response.data.map(item => {
-             const request = new AppointmentRequest(item);
-             return {
-                ...request,
-                id: item.appointmentId || item.id,
-                customerName: this.getCustomerFullName(item.customer),
-                vehiclePlate: item.vehicle?.licensePlate || 'N/A',
-                vehicleBrand: this.getVehicleBrandModel(item.vehicle),
-                appointmentDate: item.appointmentRequest?.scheduledDate || '',
-                serviceReason: item.appointmentRequest?.requestedService || 'Servicio general',
-                status: item.status || 'PENDING'
-             };
+      try {
+        const response = await this.appointmentRequestApiService.getAll();
+        const allAppointments = response.data || [];
+        
+        // Enrich appointments with vehicle and driver data (like in dashboard)
+        const enrichedAppointments = await Promise.all(
+          allAppointments.map(async (app) => {
+            let enrichedApp = { ...app };
+
+            // Get vehicle data
+            if (app.vehicleId) {
+              try {
+                const vehicleResponse = await http.get(`/vehicles/${app.vehicleId}`);
+                enrichedApp.vehicle = {
+                  brand: vehicleResponse.data.brand || 'Unknown',
+                  model: vehicleResponse.data.model || '',
+                  licensePlate: vehicleResponse.data.licensePlate || 'N/A'
+                };
+              } catch (error) {
+                console.warn(`Could not fetch vehicle ${app.vehicleId}`);
+                enrichedApp.vehicle = null;
+              }
+            }
+
+            // Get driver data (customer)
+            if (app.driverId) {
+              try {
+                const profileResponse = await http.get(`/person-profiles/${app.driverId}`);
+                const fullName = profileResponse.data.fullName || 'N/A';
+                enrichedApp.customer = {
+                  firstName: fullName.split(' ')[0] || 'N/A',
+                  lastName: fullName.split(' ').slice(1).join(' ') || ''
+                };
+              } catch (error) {
+                console.warn(`Could not fetch driver profile ${app.driverId}`);
+                enrichedApp.customer = null;
+              }
+            }
+
+            // Add appointment request with proper date formatting
+            enrichedApp.appointmentRequest = {
+              scheduledDate: app.startAt || null,
+              startTime: app.startAt ? app.startAt.split('T')[1]?.substring(0, 5) : null,
+              requestedService: app.serviceType || app.customServiceDescription || 'Servicio general'
+            };
+
+            return enrichedApp;
+          })
+        );
+        
+        // Map to display format
+        const processedAppointments = enrichedAppointments.map(item => {
+          return {
+            ...item,
+            id: item.id,
+            appointmentId: item.id,
+            customerName: this.getCustomerFullName(item.customer),
+            vehiclePlate: item.vehicle?.licensePlate || 'N/A',
+            vehicleBrand: this.getVehicleBrandModel(item.vehicle),
+            appointmentDate: item.appointmentRequest?.scheduledDate || '',
+            serviceReason: item.appointmentRequest?.requestedService || 'Servicio general',
+            status: item.status || 'PENDING'
+          };
         });
 
         // Filter only COMPLETED appointments
-        this.itemsArray = allAppointments.filter(a => a.status === 'COMPLETED');
+        this.itemsArray = processedAppointments.filter(a => a.status === 'COMPLETED');
         
-      }).catch(error => {
+      } catch (error) {
         console.error("Error loading history:", error);
         this.itemsArray = [];
         this.$toast.add({severity: 'error', summary: 'Error', detail: 'Failed to load completed services', life: 3000});
-      }).finally(() => {
+      } finally {
         this.loading = false;
-      });
+      }
     }
   },
 

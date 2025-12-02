@@ -4,6 +4,8 @@ import VehicleTelemetryDetail from '../components/vehicle-telemetry-detail.compo
 import VehicleInsightsDetail from '../components/vehicle-insights-detail.component.vue';
 import {Vehicle} from "../models/vehicle.entity.js";
 import {VehicleApiService} from "../services/vehicle-api.service.js";
+import {ProfileApiService} from "../../shared/services/profile-api.service.js";
+import http from "../../shared/services/http-common";
 
 export default {
   name: 'vehicle-detail-management',
@@ -19,6 +21,7 @@ export default {
       loading: true,
       error: null,
       vehicleApiService: new VehicleApiService(),
+      profileApiService: new ProfileApiService(),
       activeTab: 0,
       vehicleId: null
     }
@@ -45,55 +48,99 @@ export default {
       this.$router.push({name: 'vehicle-management'});
     },
 
-    getVehicleDetailsById(vehicleId) {
-      // Lógica para obtener detalles del vehículo por ID
-      // Siguiendo el patrón implementado en service-request
-      console.log(`Obtener detalles del vehículo con ID: `, vehicleId);
+    async getVehicleDetailsById(vehicleId) {
+      console.log(`Obtener detalles del vehículo con ID: ${vehicleId}`);
 
       this.loading = true;
       this.error = null;
 
-      // Paso 1: Obtener todos los vehículos de la API
-      this.vehicleApiService.getAll().then(response => {
-
-        // Paso 2: Filtrar el response para asignar el item correcto
-        // Se obtienen todos los recursos de vehículos y luego se filtra por vehicleId
-        // para quedarse solo con los datos del vehículo que se tiene que mostrar
-        const vehicleData = response.data.find(v => v.vehicleId === parseInt(vehicleId) || v.vehicleId === vehicleId);
-
-        this.vehicle = vehicleData ? new Vehicle(vehicleData) : null;
-
-        // Mostrar mensaje de éxito después de un breve delay
-        setTimeout(() => {
-          this.loading = false;
-
-          if (this.vehicle) {
-            console.log('Detalles del vehículo obtenidos:', this.vehicle);
-
-            this.$toast.add({
-              severity: 'success',
-              summary: this.$t('vehicle_management.messages.vehicle_loaded'),
-              detail: this.$t('vehicle_management.messages.loaded_successfully'),
-              life: 3000
-            });
-          } else {
-            this.error = this.$t('vehicle_management.errors.failed_to_load');
-            console.error('Vehículo no encontrado con ID:', vehicleId);
+      try {
+        // Get vehicle data using service
+        const response = await this.vehicleApiService.getById(vehicleId);
+        
+        const vehicleData = response.data;
+        
+        // Fetch Owner (Driver) details if driverId exists
+        let owner = null;
+        if (vehicleData.driverId) {
+            try {
+                const profileResponse = await this.profileApiService.getPersonProfileById(vehicleData.driverId);
+                const profile = profileResponse.data;
+                
+                // Split fullName into first and last name
+                const nameParts = profile.fullName ? profile.fullName.split(' ') : ['Unknown'];
+                const firstName = nameParts[0];
+                const lastName = nameParts.slice(1).join(' ');
+                
+                owner = {
+                    customerId: profile.profileId,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: profile.userEmail,
+                    phoneNumber: profile.phone,
+                    address: `${profile.city || ''}, ${profile.country || ''}`.replace(/^, |, $/g, ''),
+                    ownershipType: 'Individual', // Default
+                    registeredAt: null
+                };
+            } catch (err) {
+                console.warn('Failed to fetch owner details:', err);
+            }
+        }
+        
+        // Map backend fields to frontend Vehicle model
+        const mappedVehicle = {
+          vehicleId: vehicleData.id,  // Backend usa 'id', frontend usa 'vehicleId' 
+          id: vehicleData.id,
+          licensePlate: vehicleData.licensePlate || null,
+          brand: vehicleData.brand || null,
+          model: vehicleData.model || null,
+          year: vehicleData.year || null,
+          vin: vehicleData.vin || null,
+          color: vehicleData.color || null,
+          currentMileage: vehicleData.mileage || null,
+          // Campos que el backend aún no tiene, pero el frontend espera
+          subModel: null,
+          engineType: null,
+          fuelType: null,
+          transmission: null,
+          bodyType: null,
+          registrationCountry: null,
+          // Owner data
+          owner: owner,
+          // IoT Device (mock data for now)
+          iotDevice: null,
+          // Telemetry (mock data for now)
+          telemetry: null,
+          // Maintenance
+          maintenance: {
+            vehicleStatus: 'active'
           }
-        }, 300);
-      })
-          .catch(error => {
-            console.error('Error al obtener detalles del vehículo:', error);
-            this.loading = false;
-            this.error = this.$t('vehicle_management.errors.failed_to_load');
-
-            this.$toast.add({
-              severity: 'error',
-              summary: this.$t('vehicle_management.errors.error_title'),
-              detail: this.error,
-              life: 5000
-            });
-          });
+        };
+        
+        this.vehicle = new Vehicle(mappedVehicle);
+        
+        console.log('✅ Vehicle details loaded:', this.vehicle);
+        
+        this.$toast.add({
+          severity: 'success',
+          summary: this.$t('vehicle_management.messages.vehicle_loaded'),
+          detail: this.$t('vehicle_management.messages.loaded_successfully'),
+          life: 3000
+        });
+        
+      } catch (error) {
+        console.error('❌ Error loading vehicle details:', error);
+        this.error = this.$t('vehicle_management.errors.failed_to_load');
+        
+        this.$toast.add({
+          severity: 'error',
+          summary: this.$t('vehicle_management.errors.error_title'),
+          detail: this.error,
+          life: 5000
+        });
+      } finally {
+        this.loading = false;
+      }
     }
 
   },
@@ -105,7 +152,8 @@ export default {
     console.log(`Cargar detalles del vehículo con ID: ${vehicleId}`);
 
     // Inicializar servicios
-    this.vehicleApiService = new VehicleApiService('/vehicles');
+    this.vehicleApiService = new VehicleApiService();
+    this.profileApiService = new ProfileApiService();
 
     this.getVehicleDetailsById(vehicleId);
 
@@ -185,7 +233,8 @@ export default {
           <div class="tab-content-wrapper">
             <VehicleTelemetryDetail 
               :telemetry="vehicle.telemetry" 
-              :iot-device="vehicle.iotDevice" 
+              :iot-device="vehicle.iotDevice"
+              :vehicle-id="vehicle.id || vehicle.vehicleId"
             />
           </div>
         </pv-tab-panel>

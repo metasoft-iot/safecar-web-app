@@ -1,6 +1,6 @@
 <script>
 import {Vehicle} from "../models/vehicle.entity.js";
-import {VehicleApiService} from "../services/vehicle-api.service.js";
+
 
 export default {
   name: 'vehicle-detail',
@@ -86,89 +86,89 @@ export default {
       <template #content>
         <div class="formgrid grid">
           <!-- First row: Brand/Model, License Plate, Year, VIN -->
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicleDisplayName">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-car text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.brand_model') }}
             </label>
             <p class="font-semibold text-dark m-0 text-lg">{{ vehicleDisplayName }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.licensePlate">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-hashtag text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.license_plate') }}
             </label>
-            <p class="font-semibold text-dark m-0 text-lg font-mono">{{ vehicle.licensePlate || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0 text-lg font-mono">{{ vehicle.licensePlate }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.year">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-calendar text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.year') }}
             </label>
-            <p class="font-semibold text-dark m-0 text-lg">{{ vehicle.year || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0 text-lg">{{ vehicle.year }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.vin">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-id-card text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.vin_number') }}
             </label>
-            <p class="font-semibold text-dark m-0 text-sm font-mono">{{ vehicle.vin || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0 text-sm font-mono">{{ vehicle.vin }}</p>
           </div>
           
           <!-- Second row: Engine Type, Fuel Type, Color, Body Type -->
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.engineType">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-cog text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.engine_type') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.engineType || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.engineType }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.fuelType">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-tint text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.fuel_type') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.fuelType || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.fuelType }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.color">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-palette text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.color') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.color || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.color }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.bodyType">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-th-large text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.body_type') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.bodyType || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.bodyType }}</p>
           </div>
           
           <!-- Third row: Transmission, Current Mileage, Registration Country, [Additional field] -->
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.transmission">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-sliders-h text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.transmission') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.transmission || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.transmission }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.currentMileage">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-gauge text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.current_mileage') }}
             </label>
             <div class="flex align-items-center gap-2">
-              <p class="font-semibold text-dark m-0 text-xl">{{ vehicle.currentMileage?.toLocaleString() || $t('vehicle_management.messages.na') }}</p>
+              <p class="font-semibold text-dark m-0 text-xl">{{ vehicle.currentMileage?.toLocaleString() }}</p>
               <span class="text-sm text-color-secondary">km</span>
             </div>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.registrationCountry">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-map text-primary"></i>
               {{ $t('vehicle_management.detail.vehicle_information.registration_country') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.registrationCountry || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.registrationCountry }}</p>
           </div>
           <div class="field col-12 md:col-3">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
@@ -196,56 +196,56 @@ export default {
       <template #content>
         <div class="formgrid grid" v-if="vehicle.owner">
           <!-- First row: Full Name, Email, Phone, Ownership Type -->
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="ownerFullName">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-user text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.full_name') }}
             </label>
             <p class="font-semibold text-dark m-0 text-lg">{{ ownerFullName }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.owner.email">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-envelope text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.email_address') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.owner.email || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.owner.email }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.owner.phoneNumber">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-phone text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.phone_number') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.owner.phoneNumber || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.owner.phoneNumber }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.owner.ownershipType">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-briefcase text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.ownership_type') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.owner.ownershipType || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.owner.ownershipType }}</p>
           </div>
           
           <!-- Second row: Address (spans 2 columns), Registration Date, Preferred Workshop -->
-          <div class="field col-12 md:col-6">
+          <div class="field col-12 md:col-6" v-if="vehicle.owner.address">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-map-marker text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.address') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.owner.address || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.owner.address }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.owner.registeredAt">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-calendar-plus text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.registered_since') }}
             </label>
             <p class="font-semibold text-dark m-0">{{ formatDate(vehicle.owner.registeredAt) }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.owner.preferredWorkshopId">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-wrench text-primary"></i>
               {{ $t('vehicle_management.detail.owner_information.preferred_workshop') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.owner.preferredWorkshopId || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.owner.preferredWorkshopId }}</p>
           </div>
         </div>
         <div v-else class="text-center py-4">
@@ -267,49 +267,49 @@ export default {
       <template #content>
         <div class="formgrid grid">
           <!-- First row: Workshop Name, Technician, Contact Number, Workshop Email -->
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.installationWorkshop.name">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-building text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.workshop_name') }}
             </label>
-            <p class="font-semibold text-dark m-0 text-lg">{{ vehicle.installationWorkshop.name || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0 text-lg">{{ vehicle.installationWorkshop.name }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.installationWorkshop.technician">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-user-plus text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.installation_technician') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.technician || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.technician }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.installationWorkshop.contactNumber">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-phone text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.contact_number') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.contactNumber || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.contactNumber }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.installationWorkshop.email">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-envelope text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.workshop_email') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.email || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.email }}</p>
           </div>
           
           <!-- Second row: Workshop Address (spans 2 columns), Warranty Period, Certification -->
-          <div class="field col-12 md:col-6">
+          <div class="field col-12 md:col-6" v-if="vehicle.installationWorkshop.address">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-map-marker text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.workshop_address') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.address || $t('vehicle_management.messages.na') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.address }}</p>
           </div>
-          <div class="field col-12 md:col-3">
+          <div class="field col-12 md:col-3" v-if="vehicle.installationWorkshop.installationWarrantyMonths">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">
               <i class="pi pi-shield text-primary"></i>
               {{ $t('vehicle_management.detail.installation_workshop.warranty_period') }}
             </label>
-            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.installationWarrantyMonths || 0 }} {{ $t('vehicle_management.detail.installation_workshop.months') }}</p>
+            <p class="font-semibold text-dark m-0">{{ vehicle.installationWorkshop.installationWarrantyMonths }} {{ $t('vehicle_management.detail.installation_workshop.months') }}</p>
           </div>
           <div class="field col-12 md:col-3">
             <label class="font-semibold text-color-secondary flex align-items-center gap-2">

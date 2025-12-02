@@ -20,9 +20,26 @@ export default {
       pendingAppointments: 0,
       completedAppointments: 0,
       inProgressAppointments: 0,
+      cancelledAppointments: 0,
+      
+      // Chart Data
+      appointmentStatusChart: null,
+      appointmentTrendChart: null,
+      serviceTypeChart: null,
+      
+      // Chart Options
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      },
       
       mechanicService: new MechanicApiService(),
-      appointmentService: new AppointmentRequestApiService()
+      appointmentService:new AppointmentRequestApiService()
     };
   },
   
@@ -114,6 +131,10 @@ export default {
         this.pendingAppointments = this.appointments.filter(a => a.status === 'PENDING').length;
         this.completedAppointments = this.appointments.filter(a => a.status === 'COMPLETED').length;
         this.inProgressAppointments = this.appointments.filter(a => a.status === 'IN_PROGRESS').length;
+        this.cancelledAppointments = this.appointments.filter(a => a.status === 'CANCELLED').length;
+        
+        // Generate Charts
+        this.generateCharts();
         
       } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -121,6 +142,99 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    
+    generateCharts() {
+      // 1. Appointment Status Chart (Pie)
+      this.appointmentStatusChart = {
+        labels: ['Pending', 'In Progress', 'Completed', 'Cancelled'],
+        datasets: [
+          {
+            data: [
+              this.pendingAppointments,
+              this.inProgressAppointments,
+              this.completedAppointments,
+              this.cancelledAppointments
+            ],
+            backgroundColor: ['#FFA726', '#42A5F5', '#66BB6A', '#EF5350'],
+            hoverBackgroundColor: ['#FB8C00', '#1E88E5', '#43A047', '#E53935']
+          }
+        ]
+      };
+      
+      // 2. Appointment Trend Chart (Line) - Last 6 months
+      const monthlyData = this.getMonthlyAppointmentTrend();
+      this.appointmentTrendChart = {
+        labels: monthlyData.labels,
+        datasets: [
+          {
+            label: 'Appointments',
+            data: monthlyData.data,
+            fill: true,
+            borderColor: '#42A5F5',
+            backgroundColor: 'rgba(66, 165, 245, 0.2)',
+            tension: 0.4
+          }
+        ]
+      };
+      
+      // 3. Service Type Chart (Doughnut)
+      const serviceData = this.getServiceTypeDistribution();
+      this.serviceTypeChart = {
+        labels: serviceData.labels,
+        datasets: [
+          {
+            data: serviceData.data,
+            backgroundColor: ['#AB47BC', '#26A69A', '#FF7043', '#FFCA28', '#5C6BC0'],
+            hoverBackgroundColor: ['#8E24AA', '#00897B', '#F4511E', '#FFB300', '#3949AB']
+          }
+        ]
+      };
+    },
+    
+    getMonthlyAppointmentTrend() {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      const last6Months = [];
+      const monthCounts = new Array(6).fill(0);
+      
+      // Get last 6 months labels
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        last6Months.push(months[monthIndex]);
+      }
+      
+      // Count appointments per month
+      this.appointments.forEach(app => {
+        if (app.startAt) {
+          const appDate = new Date(app.startAt);
+          const appMonth = appDate.getMonth();
+          const monthsAgo = (currentMonth - appMonth + 12) % 12;
+          
+          if (monthsAgo < 6) {
+            monthCounts[5 - monthsAgo]++;
+          }
+        }
+      });
+      
+      return {
+        labels: last6Months,
+        data: monthCounts
+      };
+    },
+    
+    getServiceTypeDistribution() {
+      const serviceTypes = {};
+      
+      this.appointments.forEach(app => {
+        const type = app.serviceType || 'Other';
+        serviceTypes[type] = (serviceTypes[type] || 0) + 1;
+      });
+      
+      return {
+        labels: Object.keys(serviceTypes),
+        data: Object.values(serviceTypes)
+      };
     },
     
     formatDate(dateString) {
@@ -146,7 +260,8 @@ export default {
 </script>
 
 <template>
-  <div class="grid p-4">
+  <div class="dashboard-container">
+    <div class="grid p-4">
     <pv-toast />
     
     <div class="col-12 mb-4">
@@ -162,90 +277,123 @@ export default {
     </div>
 
     <template v-else>
+        <!-- Stats Cards -->
+        <div class="col-12 lg:col-3 md:col-6">
+            <div class="surface-card shadow-2 p-3 border-round">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">Total Appointments</span>
+                        <div class="text-900 font-medium text-xl">{{ totalAppointments }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-blue-100 border-round" style="width:2.5rem;height:2.5rem">
+                        <i class="pi pi-calendar text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+                <span class="text-green-500 font-medium">Total </span>
+                <span class="text-500">scheduled</span>
+            </div>
+        </div>
+        
+        <div class="col-12 lg:col-3 md:col-6">
+            <div class="surface-card shadow-2 p-3 border-round">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">Pending</span>
+                        <div class="text-900 font-medium text-xl">{{ pendingAppointments }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-orange-100 border-round" style="width:2.5rem;height:2.5rem">
+                        <i class="pi pi-clock text-orange-500 text-xl"></i>
+                    </div>
+                </div>
+                <span class="text-orange-500 font-medium">Action </span>
+                <span class="text-500">needed</span>
+            </div>
+        </div>
+        
+        <div class="col-12 lg:col-3 md:col-6">
+            <div class="surface-card shadow-2 p-3 border-round">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">In Progress</span>
+                        <div class="text-900 font-medium text-xl">{{ inProgressAppointments }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-cyan-100 border-round" style="width:2.5rem;height:2.5rem">
+                        <i class="pi pi-cog text-cyan-500 text-xl"></i>
+                    </div>
+                </div>
+                <span class="text-cyan-500 font-medium">Currently </span>
+                <span class="text-500">working</span>
+            </div>
+        </div>
+        
+        <div class="col-12 lg:col-3 md:col-6">
+            <div class="surface-card shadow-2 p-3 border-round">
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <span class="block text-500 font-medium mb-3">Completed</span>
+                        <div class="text-900 font-medium text-xl">{{ completedAppointments }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center bg-green-100 border-round" style="width:2.5rem;height:2.5rem">
+                        <i class="pi pi-check-circle text-green-500 text-xl"></i>
+                    </div>
+                </div>
+                <span class="text-green-500 font-medium">Services </span>
+                <span class="text-500">done</span>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="col-12 lg:col-4">
+            <div class="card surface-card shadow-2 p-4 border-round" style="height: 400px">
+                <h5 class="mb-4 text-xl font-bold">Appointment Status</h5>
+                <pv-chart type="pie" :data="appointmentStatusChart" :options="chartOptions" style="height: 300px" />
+            </div>
+        </div>
+
+        <div class="col-12 lg:col-8">
+            <div class="card surface-card shadow-2 p-4 border-round" style="height: 400px">
+                <h5 class="mb-4 text-xl font-bold">Appointment Trend (Last 6 Months)</h5>
+                <pv-chart type="line" :data="appointmentTrendChart" :options="chartOptions" style="height: 300px" />
+            </div>
+        </div>
+
+        <div class="col-12 lg:col-6">
+            <div class="card surface-card shadow-2 p-4 border-round" style="height: 400px">
+                <h5 class="mb-4 text-xl font-bold">Service Type Distribution</h5>
+                <pv-chart type="doughnut" :data="serviceTypeChart" :options="chartOptions" style="height: 300px" />
+            </div>
+        </div>
+
         <!-- Workshop Info Card -->
-        <div class="col-12 md:col-4">
-            <div class="card h-full surface-card shadow-2 p-4 border-round">
+        <div class="col-12 lg:col-6">
+            <div class="card surface-card shadow-2 p-4 border-round" style="height: 400px">
                 <div class="flex align-items-center justify-content-between mb-3">
                     <span class="text-xl font-bold text-900">Workshop Details</span>
                     <i class="pi pi-building text-blue-500 text-2xl"></i>
                 </div>
-                <div v-if="workshop">
-                    <div class="mb-2" v-if="businessProfile && businessProfile.username">
-                        <span class="font-semibold">Owner:</span> {{ businessProfile.username }}
+                <div v-if="workshop" class="overflow-y-auto" style="max-height: 320px">
+                    <div class="mb-3" v-if="businessProfile && businessProfile.username">
+                        <span class="font-semibold text-600">Owner:</span>
+                        <p class="mt-1 text-900">{{ businessProfile.username }}</p>
                     </div>
-                    <div class="mb-2"><span class="font-semibold">Name:</span> {{ workshop.name || 'My Workshop' }}</div>
-                    <!-- Backend might separate these or they might be in different fields, adjusting based on typical response -->
-                    <div class="mb-2"><span class="font-semibold">Address:</span> {{ workshop.address || workshop.location || 'N/A' }}</div>
-                    <div class="mb-2"><span class="font-semibold">Description:</span> {{ workshop.workshopDescription || businessProfile?.description || 'No description available' }}</div>
-                    <div><span class="font-semibold">Mechanics:</span> {{ totalMechanics }}</div>
+                    <div class="mb-3">
+                        <span class="font-semibold text-600">Name:</span>
+                        <p class="mt-1 text-900">{{ workshop.name || 'My Workshop' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <span class="font-semibold text-600">Address:</span>
+                        <p class="mt-1 text-900">{{ workshop.address || workshop.location || 'N/A' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <span class="font-semibold text-600">Description:</span>
+                        <p class="mt-1 text-900">{{ workshop.workshopDescription || businessProfile?.description || 'No description available' }}</p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-600">Mechanics:</span>
+                        <p class="mt-1 text-900">{{ totalMechanics }}</p>
+                    </div>
                 </div>
                 <div v-else class="text-gray-500">Workshop details not available.</div>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="col-12 md:col-8">
-            <div class="grid">
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-2 p-3 border-round">
-                        <div class="flex justify-content-between mb-3">
-                            <div>
-                                <span class="block text-500 font-medium mb-3">Appointments</span>
-                                <div class="text-900 font-medium text-xl">{{ totalAppointments }}</div>
-                            </div>
-                            <div class="flex align-items-center justify-content-center bg-blue-100 border-round" style="width:2.5rem;height:2.5rem">
-                                <i class="pi pi-calendar text-blue-500 text-xl"></i>
-                            </div>
-                        </div>
-                        <span class="text-green-500 font-medium">Total </span>
-                        <span class="text-500">scheduled</span>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-2 p-3 border-round">
-                        <div class="flex justify-content-between mb-3">
-                            <div>
-                                <span class="block text-500 font-medium mb-3">Pending</span>
-                                <div class="text-900 font-medium text-xl">{{ pendingAppointments }}</div>
-                            </div>
-                            <div class="flex align-items-center justify-content-center bg-orange-100 border-round" style="width:2.5rem;height:2.5rem">
-                                <i class="pi pi-clock text-orange-500 text-xl"></i>
-                            </div>
-                        </div>
-                        <span class="text-orange-500 font-medium">Action </span>
-                        <span class="text-500">needed</span>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-2 p-3 border-round">
-                        <div class="flex justify-content-between mb-3">
-                            <div>
-                                <span class="block text-500 font-medium mb-3">In Progress</span>
-                                <div class="text-900 font-medium text-xl">{{ inProgressAppointments }}</div>
-                            </div>
-                            <div class="flex align-items-center justify-content-center bg-cyan-100 border-round" style="width:2.5rem;height:2.5rem">
-                                <i class="pi pi-cog text-cyan-500 text-xl"></i>
-                            </div>
-                        </div>
-                        <span class="text-cyan-500 font-medium">Currently </span>
-                        <span class="text-500">working</span>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-2 p-3 border-round">
-                        <div class="flex justify-content-between mb-3">
-                            <div>
-                                <span class="block text-500 font-medium mb-3">Completed</span>
-                                <div class="text-900 font-medium text-xl">{{ completedAppointments }}</div>
-                            </div>
-                            <div class="flex align-items-center justify-content-center bg-green-100 border-round" style="width:2.5rem;height:2.5rem">
-                                <i class="pi pi-check-circle text-green-500 text-xl"></i>
-                            </div>
-                        </div>
-                        <span class="text-green-500 font-medium">Services </span>
-                        <span class="text-500">done</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -257,7 +405,11 @@ export default {
                     <pv-button icon="pi pi-arrow-right" label="View All" class="p-button-text" @click="$router.push('/safe-car/mechanic/service-request')" />
                 </div>
                 <pv-data-table :value="appointments.slice(0, 5)" responsiveLayout="scroll">
-                    <pv-column field="appointmentId" header="ID"></pv-column>
+                    <pv-column field="id" header="ID">
+                        <template #body="slotProps">
+                            APT-{{ slotProps.data.id }}
+                        </template>
+                    </pv-column>
                     <pv-column field="customer.firstName" header="Customer">
                         <template #body="slotProps">
                             {{ slotProps.data.customer ? `${slotProps.data.customer.firstName} ${slotProps.data.customer.lastName}` : 'N/A' }}
@@ -282,10 +434,16 @@ export default {
             </div>
         </div>
     </template>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.dashboard-container {
+    width: 100%;
+    min-height: 100%;
+}
+
 .card {
     background: var(--surface-card);
 }

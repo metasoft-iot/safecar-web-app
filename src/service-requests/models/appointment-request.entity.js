@@ -312,7 +312,8 @@ export class AppointmentRequest {
     /** @type {number|null} Database unique identifier */
     this.id = id;
     /** @type {string|null} Unique appointment identifier */
-    this.appointmentId = appointmentId;
+    // El backend devuelve el ID numérico, lo usamos como appointmentId
+    this.appointmentId = appointmentId || (id ? `APT-${id}` : null);
     /** @type {AppointmentRequestDetails|null} Specific request details */
     this.appointmentDetails = appointmentRequest
       ? new AppointmentRequestDetails(appointmentRequest)
@@ -330,7 +331,8 @@ export class AppointmentRequest {
         firstName: driver.fullName ? driver.fullName.split(' ')[0] : '',
         lastName: driver.fullName ? driver.fullName.split(' ').slice(1).join(' ') : '',
         phoneNumber: driver.phone,
-        email: driver.email
+        email: driver.userEmail || driver.email,
+        address: driver.address || null
       }) : null);
     /** @type {Vehicle|null} Vehicle information */
     this.vehicle = vehicle ? new Vehicle(vehicle) : null;

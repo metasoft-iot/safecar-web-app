@@ -17,8 +17,12 @@
     "menu": {
       "dashboard": "Panel Principal",
       "appointments": "Citas",
-      "history": "Historial",
-      "vehicles": "Vehículos"
+      "history": "Citas Completas",
+      "vehicles": "Vehículos",
+      "devices": "Dispositivos",
+      "mechanics": "Mecánicos",
+      "subscriptions": "Suscripciones",
+      "profile": "Perfil"
     },
     "logout": "Cerrar Sesión",
     "created_success": "Sidebar creado de manera exitosa"

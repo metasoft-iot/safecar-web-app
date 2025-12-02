@@ -1,4 +1,6 @@
 <script>
+import { TelemetryApiService } from "../services/telemetry-api.service.js";
+
 export default {
   name: 'vehicle-telemetry-detail',
   
@@ -10,7 +12,74 @@ export default {
     iotDevice: {
       type: Object,
       default: null
+    },
+    vehicleId: {
+      type: [Number, String],
+      required: false
     }
+  },
+
+  data() {
+    return {
+      telemetryService: new TelemetryApiService(),
+      historyData: [],
+      loadingHistory: false,
+      engineTempChartData: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Engine Temperature (°C)',
+            data: [],
+            fill: true,
+            borderColor: '#FFA726',
+            backgroundColor: 'rgba(255, 167, 38, 0.2)',
+            tension: 0.4
+          }
+        ]
+      },
+      speedChartData: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Speed (km/h)',
+            data: [],
+            fill: true,
+            borderColor: '#42A5F5',
+            backgroundColor: 'rgba(66, 165, 245, 0.2)',
+            tension: 0.4
+          }
+        ]
+      },
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#495057'
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: '#495057'
+            },
+            grid: {
+              color: '#ebedef'
+            }
+          },
+          y: {
+            ticks: {
+              color: '#495057'
+            },
+            grid: {
+              color: '#ebedef'
+            }
+          }
+        }
+      }
+    };
   },
 
   computed: {
@@ -64,16 +133,126 @@ export default {
       if (strength >= -50) return 'text-green-500';
       if (strength >= -70) return 'text-yellow-500';
       return 'text-red-500';
+    },
+
+    async fetchTelemetryHistory() {
+      if (!this.vehicleId) return;
+      
+      this.loadingHistory = true;
+      try {
+        const response = await this.telemetryService.getByVehicleId(this.vehicleId);
+        // Sort by date ascending for charts
+        this.historyData = (response.data || []).sort((a, b) => new Date(a.ingestedAt) - new Date(b.ingestedAt));
+        
+        // Limit to last 20 points for readability
+        const recentHistory = this.historyData.slice(-20);
+        
+        this.prepareCharts(recentHistory);
+      } catch (error) {
+        console.error("Error fetching telemetry history:", error);
+        // Ensure charts are prepared even if error (empty)
+        this.prepareCharts([]);
+      } finally {
+        this.loadingHistory = false;
+      }
+    },
+
+    prepareCharts(data) {
+      // Always prepare charts, even if data is empty
+      const safeData = data || [];
+
+      const labels = safeData.map(item => {
+        const date = new Date(item.ingestedAt);
+        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+      });
+
+      // Engine Temperature Chart
+      this.engineTempChartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: this.$t('vehicle_management.detail.telemetry.engine_performance.engine_temperature') + ' (°C)',
+            data: safeData.map(item => item.sample?.engineTemperature || 0),
+            fill: true,
+            borderColor: '#FFA726',
+            backgroundColor: 'rgba(255, 167, 38, 0.2)',
+            tension: 0.4
+          }
+        ]
+      };
+
+      // Speed Chart
+      this.speedChartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: this.$t('vehicle_management.detail.telemetry.engine_performance.speed') + ' (km/h)',
+            data: safeData.map(item => item.sample?.speed || 0),
+            fill: true,
+            borderColor: '#42A5F5',
+            backgroundColor: 'rgba(66, 165, 245, 0.2)',
+            tension: 0.4
+          }
+        ]
+      };
+    }
+  },
+
+  mounted() {
+    if (this.vehicleId) {
+      this.fetchTelemetryHistory();
+    }
+  },
+
+  watch: {
+    vehicleId(newVal) {
+      if (newVal) {
+        this.fetchTelemetryHistory();
+      }
     }
   }
 };
 </script>
 
 <template>
-  <div v-if="telemetry" class="flex flex-column pb-4 gap-4">
+  <div class="flex flex-column pb-4 gap-4">
     
+    <!-- ====================== Card -> Telemetry Charts ====================== -->
+    <div class="grid">
+        <div class="col-12 md:col-6">
+            <pv-card class="w-full h-full">
+                <template #header>
+                    <div class="flex align-items-center gap-2 px-3 py-2" style="background-color: #4A60D0; color: white;">
+                        <i class="pi pi-chart-line" style="color: white;"></i>
+                        <span class="text-lg font-bold">Engine Temperature History</span>
+                    </div>
+                </template>
+                <template #content>
+                    <div style="height: 300px">
+                        <pv-chart type="line" :data="engineTempChartData" :options="chartOptions" class="h-full" />
+                    </div>
+                </template>
+            </pv-card>
+        </div>
+        <div class="col-12 md:col-6">
+            <pv-card class="w-full h-full">
+                <template #header>
+                    <div class="flex align-items-center gap-2 px-3 py-2" style="background-color: #4A60D0; color: white;">
+                        <i class="pi pi-chart-bar" style="color: white;"></i>
+                        <span class="text-lg font-bold">Speed History</span>
+                    </div>
+                </template>
+                <template #content>
+                    <div style="height: 300px">
+                        <pv-chart type="line" :data="speedChartData" :options="chartOptions" class="h-full" />
+                    </div>
+                </template>
+            </pv-card>
+        </div>
+    </div>
+
     <!-- ====================== Card -> Engine & Performance Data ====================== -->
-    <pv-card class="w-full">
+    <pv-card class="w-full" v-if="telemetry">
       <template #header>
         <div class="flex align-items-center justify-content-between px-3 py-2" style="background-color: #4A60D0; color: white;">
           <div class="flex align-items-center gap-2">
@@ -190,7 +369,7 @@ export default {
     </pv-card>
 
     <!-- ====================== Card -> GPS Location ====================== -->
-    <pv-card class="w-full" v-if="telemetry.gpsCoordinates">
+    <pv-card class="w-full" v-if="telemetry && telemetry.gpsCoordinates">
       <template #header>
         <div class="flex align-items-center gap-2 px-3 py-2" style="background-color: #4A60D0; color: white;">
           <i class="pi pi-map-marker" style="color: white;"></i>
@@ -334,7 +513,7 @@ export default {
     </pv-card>
 
     <!-- ====================== Card -> Diagnostics & Alerts ====================== -->
-    <pv-card class="w-full">
+    <pv-card class="w-full" v-if="telemetry">
       <template #header>
         <div class="flex align-items-center justify-content-between px-3 py-2" style="background-color: #4A60D0; color: white;">
           <div class="flex align-items-center gap-2">
@@ -428,13 +607,13 @@ export default {
       </template>
     </pv-card>
 
-  </div>
+    <!-- No telemetry data message -->
+    <div v-if="!telemetry" class="flex flex-column align-items-center justify-content-center py-8">
+      <i class="pi pi-info-circle text-6xl text-400 mb-4"></i>
+      <h3 class="text-600 text-xl m-0 mb-2">{{ $t('vehicle_management.detail.telemetry.no_data') }}</h3>
+      <p class="text-500 text-center m-0">{{ $t('vehicle_management.detail.telemetry.no_data_message') }}</p>
+    </div>
 
-  <!-- No telemetry data message -->
-  <div v-else class="flex flex-column align-items-center justify-content-center py-8">
-    <i class="pi pi-info-circle text-6xl text-400 mb-4"></i>
-    <h3 class="text-600 text-xl m-0 mb-2">{{ $t('vehicle_management.detail.telemetry.no_data') }}</h3>
-    <p class="text-500 text-center m-0">{{ $t('vehicle_management.detail.telemetry.no_data_message') }}</p>
   </div>
 </template>
 

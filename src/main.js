@@ -47,6 +47,7 @@ import TabList from "primevue/tablist";
 import Tab from "primevue/tab";
 import TabPanel from "primevue/tabpanel";
 import TabView from "primevue/tabview";
+import Chart from "primevue/chart";
 
 
 import Toast from "primevue/toast";
@@ -176,6 +177,7 @@ app.component('pv-button', Button)
     .component('pv-progress-spinner', ProgressSpinner)
     .component('pv-input-mask', InputMask)
     .component('pv-chip', Chip)
-    .component('pv-paginator', Paginator);
+    .component('pv-paginator', Paginator)
+    .component('pv-chart', Chart);
 
 app.mount('#app')

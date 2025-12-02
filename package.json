@@ -18,6 +18,7 @@
     "@primevue/themes": "^4.4.0",
     "@stripe/stripe-js": "^8.5.3",
     "axios": "^1.12.2",
+    "chart.js": "^4.5.1",
     "i18n": "^0.15.2",
     "iconify": "^1.4.0",
     "pinia": "^3.0.3",

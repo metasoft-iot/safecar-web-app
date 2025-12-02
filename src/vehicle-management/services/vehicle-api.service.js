@@ -33,4 +33,8 @@ export class VehicleApiService {
         return http.get(`/workshops/${workshopId}/appointments`);
     }
 
+    getById(id) {
+        return http.get(`/vehicles/${id}`);
+    }
+
 }
