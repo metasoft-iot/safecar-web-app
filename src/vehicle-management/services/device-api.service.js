@@ -14,7 +14,7 @@ export class DeviceApiService {
     }
 
     searchByMacAddress(macAddress) {
-        return http.get(`/devices/search?macAddress=${macAddress}`);
+        return http.get(`/devices?mac-address=${macAddress}`);
     }
 
     update(id, data) {

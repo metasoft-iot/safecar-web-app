@@ -3,11 +3,11 @@ import http from "../../shared/services/http-common";
 export class MechanicApiService {
 
     getAllByWorkshopId(workshopId) {
-        return http.get(`/mechanics/workshop/${workshopId}`);
+        return http.get(`/mechanics?workshop=${workshopId}`);
     }
 
     getWorkshopByBusinessProfileId(businessProfileId) {
-        return http.get(`/workshops/by-business-profile/${businessProfileId}`);
+        return http.get(`/workshops?business-profile=${businessProfileId}`);
     }
 
     getWorkshopById(workshopId) {
@@ -19,7 +19,7 @@ export class MechanicApiService {
     }
 
     getMechanicByProfileId(profileId) {
-        return http.get(`/mechanics/profile/${profileId}`);
+        return http.get(`/mechanics?profile=${profileId}`);
     }
 
     updateWorkshop(workshopId, data) {
