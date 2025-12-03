@@ -50,7 +50,7 @@ export class AppointmentRequestApiService {
 
     async getById(id) {
         const workshopId = await this.getWorkshopId();
-        return http.get(`/workshops/${workshopId}?appointment=${id}`);
+        return http.get(`/workshops/${workshopId}/appointments?appointment=${id}`);
     }
 
     async create(appointmentData) {
